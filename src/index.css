@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+
+  /* Brand: white base, teal/blue-green primary */
+  --color-brand-50: #effcf9;
+  --color-brand-100: #c9f5ec;
+  --color-brand-200: #96ebda;
+  --color-brand-300: #5cd7c3;
+  --color-brand-400: #2fbcac;
+  --color-brand-500: #159d8f;
+  --color-brand-600: #0f7d73;
+  --color-brand-700: #10635c;
+  --color-brand-800: #124f4a;
+  --color-brand-900: #12413d;
+
+  --color-paper: #fcfcfa;
+  --color-plane: #f6f5f1;
+  --color-ink: #14201d;
+  --color-ink-secondary: #52534e;
+  --color-ink-muted: #85837c;
+  --color-line: #e5e2da;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-plane);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  font-variant-numeric: proportional-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+}
