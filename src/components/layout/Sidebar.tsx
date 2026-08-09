@@ -20,7 +20,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col bg-brand-900 px-4 py-6 text-brand-50 md:flex">
+    <aside className="hidden w-60 shrink-0 flex-col bg-brand-900 px-4 py-6 text-brand-50 md:sticky md:top-0 md:flex md:h-screen md:overflow-y-auto">
       <div className="mb-6 flex items-center gap-2 px-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-800">
           <ShieldCheck size={18} strokeWidth={2.25} />
