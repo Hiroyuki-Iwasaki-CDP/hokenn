@@ -1,0 +1,73 @@
+import type { InsurancePolicy } from '../types/insurance'
+
+// デモ画面(/demo)専用の架空データ。実在の人物・法人とは関係ありません。
+// ログイン・APIを一切使わない、見た目だけの静的モックです。
+
+export const DEMO_DISPLAY_NAME = '佐藤'
+
+export const DEMO_POLICIES: InsurancePolicy[] = [
+  {
+    id: 'demo-medical',
+    insuredPersonName: 'わたし',
+    category: 'medical',
+    insuranceCompany: 'あんしん生命',
+    productName: '終身医療保険 リブフル',
+    policyNumber: 'ML-2021-0457812',
+    monthlyPremium: 3340,
+    coverageSummary: '入院1日 5,000円、手術給付金あり',
+    contractDate: '2021-04-01',
+    renewalDate: null,
+    status: 'active',
+    memo: null,
+    createdAt: '2021-04-01T10:00:00+09:00',
+    updatedAt: '2025-11-02T09:30:00+09:00',
+  },
+  {
+    id: 'demo-death',
+    insuredPersonName: 'わたし',
+    category: 'death',
+    insuranceCompany: 'あんしん生命',
+    productName: '定期保険 ずっと安心',
+    policyNumber: 'AB-2019-3390221',
+    monthlyPremium: 4250,
+    coverageSummary: '死亡保障 1,000万円',
+    contractDate: '2021-04-01',
+    renewalDate: '2031-02-01',
+    status: 'active',
+    memo: null,
+    createdAt: '2021-04-01T10:00:00+09:00',
+    updatedAt: '2025-09-14T13:20:00+09:00',
+  },
+  {
+    id: 'demo-cancer',
+    insuredPersonName: '配偶者',
+    category: 'cancer',
+    insuranceCompany: 'あんしん生命',
+    productName: 'がん診断保険Days',
+    policyNumber: 'TB-2022-1188034',
+    monthlyPremium: 2980,
+    coverageSummary: '診断一時金 100万円',
+    contractDate: '2022-08-01',
+    renewalDate: null,
+    status: 'active',
+    memo: null,
+    createdAt: '2022-08-01T11:00:00+09:00',
+    updatedAt: '2025-08-20T16:40:00+09:00',
+  },
+  {
+    id: 'demo-fire',
+    insuredPersonName: '家族全員',
+    category: 'fire',
+    insuranceCompany: 'あんしん損保',
+    productName: 'すまいの安心保険',
+    policyNumber: 'NG-2022-7742210',
+    monthlyPremium: 2167,
+    coverageSummary: '建物 2,000万円',
+    contractDate: '2022-01-15',
+    renewalDate: '2027-01-15',
+    status: 'active',
+    memo: null,
+    createdAt: '2022-01-15T14:00:00+09:00',
+    updatedAt: '2025-12-01T10:10:00+09:00',
+  },
+]

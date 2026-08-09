@@ -3,10 +3,12 @@ import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
 import RequireAuth, { RedirectIfAuthenticated, RequireAuthOnly } from './components/auth/RequireAuth'
 import AppLayout from './components/layout/AppLayout'
+import DemoLayout from './components/layout/DemoLayout'
 import Login from './pages/Login'
 import VerifyCode from './pages/VerifyCode'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
+import DemoDashboard from './pages/DemoDashboard'
 import PolicyList from './pages/PolicyList'
 import PolicyDetail from './pages/PolicyDetail'
 import PolicyForm from './pages/PolicyForm'
@@ -18,6 +20,11 @@ export default function App() {
     <AuthProvider>
       <HashRouter>
         <Routes>
+          {/* ログイン不要の見た目だけのデモ画面。サンプルデータのみで、実データ・実APIには触れない。 */}
+          <Route element={<DemoLayout />}>
+            <Route path="/demo" element={<DemoDashboard />} />
+          </Route>
+
           <Route element={<RedirectIfAuthenticated />}>
             <Route path="/login" element={<Login />} />
             <Route path="/login/verify" element={<VerifyCode />} />
