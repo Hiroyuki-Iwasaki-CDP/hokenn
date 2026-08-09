@@ -9,12 +9,12 @@ export interface ComparisonItem {
 export interface ComparisonGroup {
   category: CategoryId
   headlineLabel: string
-  unit: '円' | '円/日'
   total: number
   items: ComparisonItem[]
 }
 
-// 同じ被保険者・同じ保障分野の契約をまとめ、保障額を積み上げ比較できる形にする
+// 同じ被保険者・同じ保障分野の契約をまとめ、月額保険料の内訳を比較できる形にする。
+// (β版の簡素化されたデータモデルには保障額の内訳が無いため、月額保険料で比較する)
 export function buildComparisonGroups(policies: InsurancePolicy[]): ComparisonGroup[] {
   const byCategory = new Map<CategoryId, InsurancePolicy[]>()
   for (const policy of policies) {
@@ -26,15 +26,14 @@ export function buildComparisonGroups(policies: InsurancePolicy[]): ComparisonGr
 
   const groups: ComparisonGroup[] = []
   for (const [category, list] of byCategory) {
-    const meta = getCategory(category)
+    if (list.length < 2) continue
     const items: ComparisonItem[] = list
-      .map((policy) => ({ policy, amount: policy[meta.headline] }))
-      .filter((x): x is { policy: InsurancePolicy; amount: number } => typeof x.amount === 'number' && x.amount > 0)
+      .filter((p) => p.monthlyPremium > 0)
+      .map((policy) => ({ policy, amount: policy.monthlyPremium }))
     if (items.length === 0) continue
     groups.push({
       category,
-      headlineLabel: meta.headlineLabel,
-      unit: meta.headline === 'hospitalizationDaily' ? '円/日' : '円',
+      headlineLabel: `${getCategory(category).label}の月額保険料`,
       total: items.reduce((sum, i) => sum + i.amount, 0),
       items: items.sort((a, b) => b.amount - a.amount),
     })

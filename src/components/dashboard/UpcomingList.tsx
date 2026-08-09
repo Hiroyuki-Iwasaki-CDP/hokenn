@@ -21,8 +21,8 @@ export default function UpcomingList({ items }: { items: UpcomingItem[] }) {
         <h3 className="mb-3 text-sm font-bold text-ink">これからの予定</h3>
         <EmptyState
           icon={<CalendarClock size={22} />}
-          title="更新・満期の予定はありません"
-          description="更新日や満期日を登録すると、ここに表示されます。"
+          title="更新の予定はありません"
+          description="更新日を登録すると、ここに表示されます。"
         />
       </div>
     )
@@ -51,9 +51,7 @@ export default function UpcomingList({ items }: { items: UpcomingItem[] }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-ink">{item.policy.productName}</span>
-                  <span className="block truncate text-xs text-ink-muted">
-                    {item.kind === 'renewal' ? '更新日' : '満期日'}: {formatDate(item.date)}
-                  </span>
+                  <span className="block truncate text-xs text-ink-muted">更新日: {formatDate(item.date)}</span>
                 </span>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${

@@ -1,4 +1,5 @@
 import { ShieldCheck } from 'lucide-react'
+import BetaBadge from '../common/BetaBadge'
 
 export default function MobileHeader() {
   return (
@@ -7,6 +8,7 @@ export default function MobileHeader() {
         <ShieldCheck size={16} strokeWidth={2.25} />
       </span>
       <span className="text-sm font-bold text-ink">わが家の保険</span>
+      <BetaBadge />
     </header>
   )
 }

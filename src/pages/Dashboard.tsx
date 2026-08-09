@@ -2,24 +2,25 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ListChecks, Wallet, CalendarDays, ArrowRight } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
+import { useAuth } from '../store/AuthContext'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
 import CoverageMap from '../components/dashboard/CoverageMap'
 import CoverageTimeline from '../components/dashboard/CoverageTimeline'
 import UpcomingList from '../components/dashboard/UpcomingList'
 import StatCard from '../components/common/StatCard'
-import PolicyCard, { relationLabelOf } from '../components/policy/PolicyCard'
+import PolicyCard from '../components/policy/PolicyCard'
 import EmptyState from '../components/common/EmptyState'
-import { ALL_FAMILY_ID, filterPoliciesByFamily } from '../lib/familyFilter'
+import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { sumAnnualPremium, sumMonthlyPremium, sortByUpcoming } from '../lib/calculations'
 import { formatDate, formatYen } from '../lib/format'
 import type { CategoryId } from '../types/insurance'
 
 export default function Dashboard() {
-  const { family, policies } = useInsurance()
+  const { policies, loading } = useInsurance()
+  const { user } = useAuth()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
 
-  const selfMember = family.find((m) => m.relation === 'self')
-  const greetingName = selfMember ? selfMember.name.split(' ')[0] : ''
+  const persons = useMemo(() => listInsuredPersons(policies), [policies])
 
   const filtered = useMemo(
     () => filterPoliciesByFamily(policies, selectedFamily),
@@ -39,16 +40,15 @@ export default function Dashboard() {
     return set
   }, [activePolicies])
 
-  const getMemberName = (id: string) => family.find((m) => m.id === id)?.name ?? '—'
-  const getMemberRelation = (id: string) => relationLabelOf(family.find((m) => m.id === id)?.relation ?? 'other')
+  if (loading) return null
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold tracking-wide text-brand-600 uppercase">Insurance Overview</p>
-          <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">こんにちは、{greetingName}さん</h1>
-          <p className="mt-1 text-sm text-ink-secondary">いまの備えを、家族みんなで見渡しましょう。</p>
+          <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">こんにちは、{user?.displayName ?? ''}さん</h1>
+          <p className="mt-1 text-sm text-ink-secondary">いまの備えを、見渡しましょう。</p>
         </div>
         <Link
           to="/policies/new"
@@ -58,12 +58,12 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <FamilyTabs family={family} value={selectedFamily} onChange={setSelectedFamily} />
+      <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
 
       {policies.length === 0 ? (
         <EmptyState
           title="まだ保険が登録されていません"
-          description="保険証券をお手元に用意して、最初の1件を登録してみましょう。"
+          description="まずはお手元の保険証券を見ながら登録してみましょう"
           action={
             <Link
               to="/policies/new"
@@ -91,7 +91,7 @@ export default function Dashboard() {
               icon={<Wallet size={20} />}
             />
             <StatCard
-              label="次の更新・満期"
+              label="次の更新"
               value={nextUpcoming ? formatDate(nextUpcoming.date).replace('日', '') : '—'}
               unit={nextUpcoming ? '日' : ''}
               sub={
@@ -107,7 +107,7 @@ export default function Dashboard() {
 
           <CoverageMap registeredCategories={registeredCategories} />
 
-          <CoverageTimeline policies={activePolicies} getMemberName={getMemberName} />
+          <CoverageTimeline policies={activePolicies} />
 
           <UpcomingList items={upcoming} />
 
@@ -120,16 +120,11 @@ export default function Dashboard() {
               </Link>
             </div>
             {filtered.length === 0 ? (
-              <EmptyState title="該当する保険がありません" description="家族の切り替えをご確認ください。" />
+              <EmptyState title="該当する保険がありません" description="対象者の切り替えをご確認ください。" />
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.slice(0, 6).map((p) => (
-                  <PolicyCard
-                    key={p.id}
-                    policy={p}
-                    insuredName={getMemberName(p.insuredMemberId)}
-                    insuredRelation={getMemberRelation(p.insuredMemberId)}
-                  />
+                  <PolicyCard key={p.id} policy={p} />
                 ))}
               </div>
             )}

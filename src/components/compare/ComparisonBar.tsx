@@ -3,12 +3,12 @@ import { Info } from 'lucide-react'
 import type { ComparisonGroup } from '../../lib/compare'
 import { getCategory } from '../../lib/categories'
 import { segmentColor } from '../../lib/color'
-import { formatYen, formatYenPerDay } from '../../lib/format'
+import { formatYen } from '../../lib/format'
 
 export default function ComparisonBar({ group }: { group: ComparisonGroup }) {
   const meta = getCategory(group.category)
   const Icon = meta.icon
-  const formatAmount = (v: number) => (group.unit === '円/日' ? formatYenPerDay(v) : formatYen(v))
+  const formatAmount = (v: number) => formatYen(v)
   const overlapping = group.items.length > 1
 
   return (
@@ -37,7 +37,7 @@ export default function ComparisonBar({ group }: { group: ComparisonGroup }) {
               width: `${(item.amount / group.total) * 100}%`,
               backgroundColor: segmentColor(meta.color, i),
             }}
-            title={`${item.policy.insurerName} ${item.policy.productName}: ${formatAmount(item.amount)}`}
+            title={`${item.policy.insuranceCompany} ${item.policy.productName}: ${formatAmount(item.amount)}`}
           />
         ))}
       </div>
@@ -50,7 +50,7 @@ export default function ComparisonBar({ group }: { group: ComparisonGroup }) {
               style={{ backgroundColor: segmentColor(meta.color, i) }}
             />
             <Link to={`/policies/${item.policy.id}`} className="min-w-0 flex-1 truncate font-medium text-ink hover:underline">
-              {item.policy.insurerName} ・ {item.policy.productName}
+              {item.policy.insuranceCompany} ・ {item.policy.productName}
             </Link>
             <span className="shrink-0 font-semibold text-ink-secondary tabular-nums">{formatAmount(item.amount)}</span>
           </li>

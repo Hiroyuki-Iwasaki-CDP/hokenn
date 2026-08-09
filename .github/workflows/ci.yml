@@ -1,0 +1,32 @@
+name: CI
+
+# 本番デプロイはVercelのGit連携が担当する(このワークフローはビルド・型チェック・依存関係の
+# 脆弱性確認のみを行う)。Vercel側のプロジェクト設定でmainブランチへのpushを本番デプロイに
+# 紐づけていることを前提とする。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      # 既知の残存事項: @vercel/node の内部ビルドツール(esbuild/undici等、開発時のみ使用され
+      # 本番の関数コードには含まれない)に上流未修正の脆弱性がある。実行時コードではないため
+      # CIは失敗させないが、結果はログに残し定期的に確認する。README「残っているリスク」参照。
+      - run: npm audit --audit-level=high
+        continue-on-error: true

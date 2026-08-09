@@ -4,26 +4,28 @@ import { useInsurance } from '../store/InsuranceContext'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
 import ComparisonBar from '../components/compare/ComparisonBar'
 import EmptyState from '../components/common/EmptyState'
-import { ALL_FAMILY_ID, filterPoliciesByFamily, selectableFamilyTabs } from '../lib/familyFilter'
+import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { buildComparisonGroups } from '../lib/compare'
-import { RELATION_LABEL } from '../lib/status'
-import type { FamilyMember, InsurancePolicy } from '../types/insurance'
+import type { InsurancePolicy } from '../types/insurance'
 
 export default function Compare() {
-  const { family, policies } = useInsurance()
+  const { policies, loading } = useInsurance()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
 
-  const sections = useMemo(() => {
-    const members: FamilyMember[] =
-      selectedFamily === ALL_FAMILY_ID ? selectableFamilyTabs(family) : family.filter((m) => m.id === selectedFamily)
+  const persons = useMemo(() => listInsuredPersons(policies), [policies])
 
-    return members
-      .map((member) => {
-        const memberPolicies: InsurancePolicy[] = filterPoliciesByFamily(policies, member.id)
-        return { member, groups: buildComparisonGroups(memberPolicies) }
+  const sections = useMemo(() => {
+    const targets = selectedFamily === ALL_FAMILY_ID ? persons : persons.filter((p) => p === selectedFamily)
+
+    return targets
+      .map((name) => {
+        const memberPolicies: InsurancePolicy[] = filterPoliciesByFamily(policies, name)
+        return { name, groups: buildComparisonGroups(memberPolicies) }
       })
       .filter((s) => s.groups.length > 0)
-  }, [family, policies, selectedFamily])
+  }, [persons, policies, selectedFamily])
+
+  if (loading) return null
 
   return (
     <div className="space-y-6">
@@ -31,11 +33,11 @@ export default function Compare() {
         <p className="text-xs font-semibold tracking-wide text-brand-600 uppercase">Compare Coverage</p>
         <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">保障を比べる</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          同じ分野に複数の保険がある場合に、保障額の内訳をまとめて確認できます。
+          同じ分野に複数の保険がある場合に、月額保険料の内訳をまとめて確認できます。
         </p>
       </div>
 
-      <FamilyTabs family={family} value={selectedFamily} onChange={setSelectedFamily} />
+      <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
 
       {sections.length === 0 ? (
         <EmptyState
@@ -45,12 +47,11 @@ export default function Compare() {
         />
       ) : (
         <div className="space-y-8">
-          {sections.map(({ member, groups }) => (
-            <div key={member.id}>
-              {selectedFamily === ALL_FAMILY_ID && (
+          {sections.map(({ name, groups }) => (
+            <div key={name}>
+              {selectedFamily === ALL_FAMILY_ID && persons.length > 1 && (
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">
-                  <span className="rounded-full bg-plane px-2.5 py-1 text-xs">{RELATION_LABEL[member.relation]}</span>
-                  {member.name}
+                  <span className="rounded-full bg-plane px-2.5 py-1 text-xs">{name}</span>
                 </h2>
               )}
               <div className="space-y-4">
@@ -64,7 +65,7 @@ export default function Compare() {
       )}
 
       <p className="rounded-xl bg-plane px-4 py-3 text-xs leading-relaxed text-ink-secondary">
-        この画面は登録された内容をもとに保障額を合計して表示しているだけです。必要な保障額の判断や、保険の解約・加入のご提案は行っていません。内容のご確認は保険証券や保険会社にお問い合わせください。
+        この画面は登録された内容をもとに月額保険料を合計して表示しているだけです。必要な保障額の判断や、保険の解約・加入のご提案は行っていません。内容のご確認は保険証券や保険会社にお問い合わせください。
       </p>
     </div>
   )

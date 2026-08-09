@@ -5,7 +5,7 @@ export default function PrivacyFooter() {
     <footer className="mt-10 space-y-2 border-t border-line px-1 py-6 text-xs text-ink-muted">
       <p className="flex items-start gap-1.5">
         <HardDrive size={14} className="mt-0.5 shrink-0" />
-        入力したデータはお使いのブラウザ内(localStorage)にのみ保存され、外部には送信されません。
+        入力したデータはご本人のアカウントにのみ保存され、他の利用者から見ることはできません。
       </p>
       <p className="flex items-start gap-1.5">
         <Info size={14} className="mt-0.5 shrink-0" />

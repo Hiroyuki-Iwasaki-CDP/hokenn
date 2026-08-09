@@ -1,99 +1,82 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { FamilyMember, InsurancePolicy } from '../types/insurance'
-import { SAMPLE_FAMILY, SAMPLE_POLICIES } from '../data/sampleData'
+import { api } from '../lib/api'
+import type { InsurancePolicy, PolicyInput } from '../types/insurance'
 
-const STORAGE_KEY = 'wagaya-hoken-data-v1'
-
-interface StoredData {
-  family: FamilyMember[]
+interface PoliciesResponse {
   policies: InsurancePolicy[]
 }
 
-function loadInitial(): StoredData {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as StoredData
-      if (Array.isArray(parsed.family) && Array.isArray(parsed.policies)) {
-        return parsed
-      }
-    }
-  } catch {
-    // 破損データは無視してサンプルデータから開始する
-  }
-  return { family: SAMPLE_FAMILY, policies: SAMPLE_POLICIES }
-}
-
-function genId(): string {
-  return `policy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+interface PolicyResponse {
+  policy: InsurancePolicy
 }
 
 interface InsuranceContextValue {
-  family: FamilyMember[]
   policies: InsurancePolicy[]
-  getMember: (id: string) => FamilyMember | undefined
+  loading: boolean
+  error: string | null
   getPolicy: (id: string) => InsurancePolicy | undefined
-  addPolicy: (policy: Omit<InsurancePolicy, 'id' | 'createdAt' | 'updatedAt'>) => string
-  updatePolicy: (id: string, policy: Omit<InsurancePolicy, 'id' | 'createdAt' | 'updatedAt'>) => void
-  deletePolicy: (id: string) => void
-  resetToSample: () => void
+  addPolicy: (input: PolicyInput) => Promise<string>
+  updatePolicy: (id: string, input: PolicyInput) => Promise<void>
+  deletePolicy: (id: string) => Promise<void>
+  refresh: () => Promise<void>
 }
 
 const InsuranceContext = createContext<InsuranceContextValue | null>(null)
 
+function toApiPayload(input: PolicyInput) {
+  return {
+    ...input,
+    policyNumber: input.policyNumber.trim() || null,
+    coverageSummary: input.coverageSummary.trim() || null,
+    contractDate: input.contractDate || null,
+    renewalDate: input.renewalDate || null,
+    memo: input.memo.trim() || null,
+  }
+}
+
 export function InsuranceProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<StoredData>(() => loadInitial())
+  const [policies, setPolicies] = useState<InsurancePolicy[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await api.get<PoliciesResponse>('/api/policies')
+      setPolicies(data.policies)
+    } catch {
+      setError('保険情報の取得に失敗しました。ページを再読み込みしてください。')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    } catch {
-      // 保存容量超過などは静かに無視する(ローカル保存はベストエフォート)
-    }
-  }, [data])
+    void refresh()
+  }, [refresh])
 
-  const getMember = useCallback((id: string) => data.family.find((m) => m.id === id), [data.family])
-  const getPolicy = useCallback((id: string) => data.policies.find((p) => p.id === id), [data.policies])
+  const getPolicy = useCallback((id: string) => policies.find((p) => p.id === id), [policies])
 
-  const addPolicy = useCallback((policy: Omit<InsurancePolicy, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString()
-    const id = genId()
-    setData((prev) => ({
-      ...prev,
-      policies: [...prev.policies, { ...policy, id, createdAt: now, updatedAt: now }],
-    }))
-    return id
+  const addPolicy = useCallback(async (input: PolicyInput) => {
+    const data = await api.post<PolicyResponse>('/api/policies', toApiPayload(input))
+    setPolicies((prev) => [...prev, data.policy])
+    return data.policy.id
   }, [])
 
-  const updatePolicy = useCallback((id: string, policy: Omit<InsurancePolicy, 'id' | 'createdAt' | 'updatedAt'>) => {
-    setData((prev) => ({
-      ...prev,
-      policies: prev.policies.map((p) =>
-        p.id === id ? { ...policy, id, createdAt: p.createdAt, updatedAt: new Date().toISOString() } : p,
-      ),
-    }))
+  const updatePolicy = useCallback(async (id: string, input: PolicyInput) => {
+    const data = await api.put<PolicyResponse>(`/api/policies/${id}`, toApiPayload(input))
+    setPolicies((prev) => prev.map((p) => (p.id === id ? data.policy : p)))
   }, [])
 
-  const deletePolicy = useCallback((id: string) => {
-    setData((prev) => ({ ...prev, policies: prev.policies.filter((p) => p.id !== id) }))
-  }, [])
-
-  const resetToSample = useCallback(() => {
-    setData({ family: SAMPLE_FAMILY, policies: SAMPLE_POLICIES })
+  const deletePolicy = useCallback(async (id: string) => {
+    await api.del(`/api/policies/${id}`)
+    setPolicies((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
   const value = useMemo<InsuranceContextValue>(
-    () => ({
-      family: data.family,
-      policies: data.policies,
-      getMember,
-      getPolicy,
-      addPolicy,
-      updatePolicy,
-      deletePolicy,
-      resetToSample,
-    }),
-    [data, getMember, getPolicy, addPolicy, updatePolicy, deletePolicy, resetToSample],
+    () => ({ policies, loading, error, getPolicy, addPolicy, updatePolicy, deletePolicy, refresh }),
+    [policies, loading, error, getPolicy, addPolicy, updatePolicy, deletePolicy, refresh],
   )
 
   return <InsuranceContext.Provider value={value}>{children}</InsuranceContext.Provider>

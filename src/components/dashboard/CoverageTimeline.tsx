@@ -11,22 +11,17 @@ function addYears(date: Date, years: number): Date {
   return d
 }
 
-export default function CoverageTimeline({
-  policies,
-  getMemberName,
-}: {
-  policies: InsurancePolicy[]
-  getMemberName: (id: string) => string
-}) {
+export default function CoverageTimeline({ policies }: { policies: InsurancePolicy[] }) {
   const today = useMemo(() => new Date(), [])
+  const withStartDate = useMemo(() => policies.filter((p) => !!p.contractDate), [policies])
 
   const { rangeStart, rangeEnd, rows, yearTicks } = useMemo(() => {
-    if (policies.length === 0) {
+    if (withStartDate.length === 0) {
       return { rangeStart: today, rangeEnd: today, rows: [], yearTicks: [] as number[] }
     }
-    const starts = policies.map((p) => new Date(p.startDate).getTime())
-    const finiteEnds = policies
-      .map((p) => p.maturityDate ?? p.renewalDate)
+    const starts = withStartDate.map((p) => new Date(p.contractDate as string).getTime())
+    const finiteEnds = withStartDate
+      .map((p) => p.renewalDate)
       .filter((d): d is string => !!d)
       .map((d) => new Date(d).getTime())
 
@@ -43,14 +38,13 @@ export default function CoverageTimeline({
     const rStart = new Date(minStart)
     const rEnd = new Date(maxEnd)
 
-    const rows = policies
+    const rows = withStartDate
       .slice()
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .sort((a, b) => new Date(a.contractDate as string).getTime() - new Date(b.contractDate as string).getTime())
       .map((p) => {
-        const start = new Date(p.startDate).getTime()
-        const explicitEnd = p.maturityDate ?? p.renewalDate
-        const isOpenEnded = !explicitEnd
-        const end = explicitEnd ? new Date(explicitEnd).getTime() : maxEnd
+        const start = new Date(p.contractDate as string).getTime()
+        const isOpenEnded = !p.renewalDate
+        const end = p.renewalDate ? new Date(p.renewalDate).getTime() : maxEnd
         const startPct = ((start - minStart) / (maxEnd - minStart)) * 100
         const endPct = ((end - minStart) / (maxEnd - minStart)) * 100
         return { policy: p, startPct, endPct: Math.max(endPct, startPct + 1.5), isOpenEnded }
@@ -66,7 +60,7 @@ export default function CoverageTimeline({
     }
 
     return { rangeStart: rStart, rangeEnd: rEnd, rows, yearTicks: ticks }
-  }, [policies, today])
+  }, [withStartDate, today])
 
   const todayPct = useMemo(() => {
     const span = rangeEnd.getTime() - rangeStart.getTime()
@@ -81,7 +75,7 @@ export default function CoverageTimeline({
     return ((t - rangeStart.getTime()) / span) * 100
   }
 
-  if (policies.length === 0) return null
+  if (withStartDate.length === 0) return null
 
   return (
     <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">
@@ -117,7 +111,7 @@ export default function CoverageTimeline({
               return (
                 <div key={policy.id} className="flex items-center gap-3">
                   <div className="hidden w-40 shrink-0 truncate text-xs text-ink-secondary sm:block">
-                    <span className="font-semibold text-ink">{getMemberName(policy.insuredMemberId)}</span>
+                    <span className="font-semibold text-ink">{policy.insuredPersonName}</span>
                     <span className="mx-1">·</span>
                     {meta.shortLabel}
                   </div>
@@ -132,8 +126,8 @@ export default function CoverageTimeline({
                           ? `linear-gradient(to right, ${meta.color}, ${meta.color} 80%, ${meta.color}55)`
                           : undefined,
                       }}
-                      title={`${meta.label}: ${formatDate(policy.startDate)} 〜 ${
-                        isOpenEnded ? '終身' : formatDate(policy.maturityDate ?? policy.renewalDate)
+                      title={`${meta.label}: ${formatDate(policy.contractDate)} 〜 ${
+                        isOpenEnded ? '終身' : formatDate(policy.renewalDate)
                       }`}
                     />
                   </div>

@@ -1,29 +1,26 @@
 import type { ReactNode } from 'react'
 import { Users } from 'lucide-react'
-import type { FamilyMember } from '../../types/insurance'
-import { ALL_FAMILY_ID, selectableFamilyTabs } from '../../lib/familyFilter'
-import { RELATION_LABEL } from '../../lib/status'
+import { ALL_FAMILY_ID } from '../../lib/familyFilter'
 
 export default function FamilyTabs({
-  family,
+  persons,
   value,
   onChange,
 }: {
-  family: FamilyMember[]
+  persons: string[]
   value: string
   onChange: (id: string) => void
 }) {
-  const members = selectableFamilyTabs(family)
+  if (persons.length <= 1) return null
 
   return (
-    <div className="flex flex-wrap gap-1.5 rounded-2xl bg-stone-100 p-1.5" role="tablist" aria-label="家族の切り替え">
+    <div className="flex flex-wrap gap-1.5 rounded-2xl bg-stone-100 p-1.5" role="tablist" aria-label="対象者の切り替え">
       <TabButton active={value === ALL_FAMILY_ID} onClick={() => onChange(ALL_FAMILY_ID)} icon={<Users size={15} />}>
-        家族全員
+        すべて
       </TabButton>
-      {members.map((m) => (
-        <TabButton key={m.id} active={value === m.id} onClick={() => onChange(m.id)}>
-          {RELATION_LABEL[m.relation]}
-          <span className="ml-1 hidden font-normal text-ink-muted sm:inline">({m.name})</span>
+      {persons.map((name) => (
+        <TabButton key={name} active={value === name} onClick={() => onChange(name)}>
+          {name}
         </TabButton>
       ))}
     </div>

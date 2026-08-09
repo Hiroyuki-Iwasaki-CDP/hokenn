@@ -2,45 +2,43 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, X } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
-import { ALL_FAMILY_ID, filterPoliciesByFamily } from '../lib/familyFilter'
+import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { CATEGORY_ORDER, getCategory } from '../lib/categories'
 import { STATUS_META } from '../lib/status'
 import type { PolicyStatus } from '../types/insurance'
-import PolicyCard, { relationLabelOf } from '../components/policy/PolicyCard'
+import PolicyCard from '../components/policy/PolicyCard'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
 import EmptyState from '../components/common/EmptyState'
 
 const ALL = 'all'
 
 export default function PolicyList() {
-  const { family, policies } = useInsurance()
+  const { policies, loading } = useInsurance()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
   const [category, setCategory] = useState<string>(ALL)
   const [insurer, setInsurer] = useState<string>(ALL)
   const [status, setStatus] = useState<string>(ALL)
   const [keyword, setKeyword] = useState('')
 
+  const persons = useMemo(() => listInsuredPersons(policies), [policies])
   const insurers = useMemo(
-    () => Array.from(new Set(policies.map((p) => p.insurerName))).sort(),
+    () => Array.from(new Set(policies.map((p) => p.insuranceCompany))).sort(),
     [policies],
   )
 
   const filtered = useMemo(() => {
     let result = filterPoliciesByFamily(policies, selectedFamily)
     if (category !== ALL) result = result.filter((p) => p.category === category)
-    if (insurer !== ALL) result = result.filter((p) => p.insurerName === insurer)
+    if (insurer !== ALL) result = result.filter((p) => p.insuranceCompany === insurer)
     if (status !== ALL) result = result.filter((p) => p.status === status)
     if (keyword.trim()) {
       const k = keyword.trim().toLowerCase()
       result = result.filter(
-        (p) => p.productName.toLowerCase().includes(k) || p.insurerName.toLowerCase().includes(k),
+        (p) => p.productName.toLowerCase().includes(k) || p.insuranceCompany.toLowerCase().includes(k),
       )
     }
     return result
   }, [policies, selectedFamily, category, insurer, status, keyword])
-
-  const getMemberName = (id: string) => family.find((m) => m.id === id)?.name ?? '—'
-  const getMemberRelation = (id: string) => relationLabelOf(family.find((m) => m.id === id)?.relation ?? 'other')
 
   const hasActiveFilters = category !== ALL || insurer !== ALL || status !== ALL || keyword.trim() !== ''
 
@@ -50,6 +48,8 @@ export default function PolicyList() {
     setStatus(ALL)
     setKeyword('')
   }
+
+  if (loading) return null
 
   return (
     <div className="space-y-6">
@@ -68,7 +68,7 @@ export default function PolicyList() {
         </Link>
       </div>
 
-      <FamilyTabs family={family} value={selectedFamily} onChange={setSelectedFamily} />
+      <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
 
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative flex-1 min-w-[180px]">
@@ -142,7 +142,7 @@ export default function PolicyList() {
           }
           description={
             policies.length === 0
-              ? '保険証券をお手元に用意して、最初の1件を登録してみましょう。'
+              ? 'まずはお手元の保険証券を見ながら登録してみましょう'
               : '絞り込み条件を変更するか、解除してお試しください。'
           }
           action={
@@ -167,12 +167,7 @@ export default function PolicyList() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
-            <PolicyCard
-              key={p.id}
-              policy={p}
-              insuredName={getMemberName(p.insuredMemberId)}
-              insuredRelation={getMemberRelation(p.insuredMemberId)}
-            />
+            <PolicyCard key={p.id} policy={p} />
           ))}
         </div>
       )}

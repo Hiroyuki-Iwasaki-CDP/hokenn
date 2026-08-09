@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, ListChecks, Scale, Plus } from 'lucide-react'
+import { LayoutGrid, ListChecks, Scale, Plus, Settings as SettingsIcon } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: '/', label: 'ホーム', icon: LayoutGrid, end: true },
   { to: '/policies', label: '一覧', icon: ListChecks, end: false },
   { to: '/policies/new', label: '登録', icon: Plus, end: false },
   { to: '/compare', label: '比べる', icon: Scale, end: false },
+  { to: '/settings', label: '設定', icon: SettingsIcon, end: false },
 ]
 
 export default function MobileNav() {

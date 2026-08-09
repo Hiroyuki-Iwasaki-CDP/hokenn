@@ -1,0 +1,42 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from './_lib/http'
+import { requireSessionUser } from './_lib/session'
+import { profileUpdateSchema } from './_lib/validation'
+import { writeAuditLog } from './_lib/audit'
+
+async function handler(req: VercelRequest, res: VercelResponse) {
+  const session = await requireSessionUser(req, res)
+
+  if (req.method === 'PUT') {
+    assertTrustedOrigin(req)
+    const input = profileUpdateSchema.parse(await readJsonBody(req))
+
+    const { data, error } = await session.supabase
+      .from('users')
+      .update({
+        display_name: input.displayName,
+        manage_scope: input.manageScope ?? null,
+        terms_accepted_at: new Date().toISOString(),
+      })
+      .eq('id', session.userId)
+      .select('display_name, manage_scope, terms_accepted_at')
+      .single()
+
+    if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
+
+    await writeAuditLog(session.supabase, session.userId, 'update', 'user_profile')
+    sendJson(res, 200, {
+      user: {
+        id: session.userId,
+        email: session.email,
+        displayName: data.display_name,
+        manageScope: data.manage_scope,
+      },
+    })
+    return
+  }
+
+  methodNotAllowed(res, ['PUT'])
+}
+
+export default withErrorHandling(handler)
