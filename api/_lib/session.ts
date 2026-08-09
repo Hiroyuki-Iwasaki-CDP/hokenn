@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createSupabaseServerClient } from './supabaseServer'
-import { HttpError } from './http'
+import { createSupabaseServerClient } from './supabaseServer.js'
+import { HttpError } from './http.js'
 
 export interface SessionContext {
   userId: string

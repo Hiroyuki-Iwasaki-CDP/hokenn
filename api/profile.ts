@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from './_lib/http'
-import { requireSessionUser } from './_lib/session'
-import { profileUpdateSchema } from './_lib/validation'
-import { writeAuditLog } from './_lib/audit'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from './_lib/http.js'
+import { requireSessionUser } from './_lib/session.js'
+import { profileUpdateSchema } from './_lib/validation.js'
+import { writeAuditLog } from './_lib/audit.js'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireSessionUser(req, res)

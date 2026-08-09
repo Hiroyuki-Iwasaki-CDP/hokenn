@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { ZodError } from 'zod'
-import { requireEnv } from './env'
+import { requireEnv } from './env.js'
 
 export class HttpError extends Error {
   status: number

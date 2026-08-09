@@ -1,4 +1,4 @@
-import type { PolicyInputPayload, AdvisorProfilePayload } from './validation'
+import type { PolicyInputPayload, AdvisorProfilePayload } from './validation.js'
 
 // DBの snake_case 行 <-> フロントエンドの camelCase の変換。
 // owner_user_id はレスポンスに含めない(クライアントに所有者IDの概念を持たせない)。

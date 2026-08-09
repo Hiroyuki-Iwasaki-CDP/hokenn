@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { parse, serialize } from 'cookie'
-import { requireEnv } from './env'
+import { requireEnv } from './env.js'
 
 // セッションCookieの最大有効期間。この期間を過ぎると自動ログアウトとなり、
 // 再度メールの認証コードでのログインが必要になる(要件: 「一定期間で再認証」)。

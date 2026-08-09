@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createSupabaseServerClient } from '../_lib/supabaseServer'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http'
-import { verifyCodeSchema } from '../_lib/validation'
-import { assertWithinRateLimit, recordRateLimitEvent, VERIFY_CODE_EMAIL_RULES } from '../_lib/rateLimit'
-import { writeAuditLog } from '../_lib/audit'
+import { createSupabaseServerClient } from '../_lib/supabaseServer.js'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
+import { verifyCodeSchema } from '../_lib/validation.js'
+import { assertWithinRateLimit, recordRateLimitEvent, VERIFY_CODE_EMAIL_RULES } from '../_lib/rateLimit.js'
+import { writeAuditLog } from '../_lib/audit.js'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])

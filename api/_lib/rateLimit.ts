@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto'
-import { createSupabaseAdminClient } from './supabaseServer'
-import { requireEnv } from './env'
-import { HttpError } from './http'
+import { createSupabaseAdminClient } from './supabaseServer.js'
+import { requireEnv } from './env.js'
+import { HttpError } from './http.js'
 
 type RateLimitAction = 'request_code' | 'verify_code'
 

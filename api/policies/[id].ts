@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http'
-import { requireSessionUser } from '../_lib/session'
-import { policyInputSchema } from '../_lib/validation'
-import { policyInputToRow, policyRowToApi, type PolicyRow } from '../_lib/mappers'
-import { writeAuditLog } from '../_lib/audit'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
+import { requireSessionUser } from '../_lib/session.js'
+import { policyInputSchema } from '../_lib/validation.js'
+import { policyInputToRow, policyRowToApi, type PolicyRow } from '../_lib/mappers.js'
+import { writeAuditLog } from '../_lib/audit.js'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

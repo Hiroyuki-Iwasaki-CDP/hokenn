@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, sendJson, withErrorHandling } from '../_lib/http'
-import { requireSessionUser } from '../_lib/session'
-import { createSupabaseAdminClient } from '../_lib/supabaseServer'
-import { writeAuditLog } from '../_lib/audit'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, sendJson, withErrorHandling } from '../_lib/http.js'
+import { requireSessionUser } from '../_lib/session.js'
+import { createSupabaseAdminClient } from '../_lib/supabaseServer.js'
+import { writeAuditLog } from '../_lib/audit.js'
 
 /**
  * 退会処理。
