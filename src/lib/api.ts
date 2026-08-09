@@ -25,8 +25,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (res.status === 401 && !path.startsWith('/api/auth/')) {
     // セッションが無効(未ログイン・期限切れ)。ログイン画面へ強制的に戻す。
-    if (window.location.hash !== '#/login') {
-      window.location.hash = '#/login'
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'
     }
   }
 

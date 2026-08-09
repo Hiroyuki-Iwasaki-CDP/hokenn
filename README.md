@@ -30,7 +30,7 @@ Vercel Serverless Functions (/api/**)
 Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経由])
 ```
 
-- フロントエンド: Vite / React 19 / React Router(HashRouter) / Tailwind CSS
+- フロントエンド: Vite / React 19 / React Router(BrowserRouter、`vercel.json`のrewritesでSPAフォールバック) / Tailwind CSS
 - バックエンド: Vercel Serverless Functions(`/api/**`, Node.js)。BFF(Backend for Frontend)として、認証コードの送受信・セッションCookieの発行・データCRUDの窓口になる
 - データベース・認証: Supabase(Postgres + Row Level Security + Supabase Auth のメールOTP)
 - メール配信: Supabase Authのカスタム SMTP設定(Resend等)経由

@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
 import RequireAuth, { RedirectIfAuthenticated, RequireAuthOnly } from './components/auth/RequireAuth'
@@ -18,7 +18,7 @@ import Settings from './pages/Settings'
 export default function App() {
   return (
     <AuthProvider>
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           {/* ログイン不要の見た目だけのデモ画面。サンプルデータのみで、実データ・実APIには触れない。 */}
           <Route element={<DemoLayout />}>
@@ -52,7 +52,7 @@ export default function App() {
             </Route>
           </Route>
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </AuthProvider>
   )
 }
