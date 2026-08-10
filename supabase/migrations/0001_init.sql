@@ -2,10 +2,10 @@
 --
 -- 設計方針:
 --   - 全テーブルで Row Level Security を有効化し、ポリシーが無い状態(=全拒否)から出発する。
---   - 顧客データ(insurance_policies / advisor_profiles)は owner_user_id = auth.uid() の行のみ
+--   - 顧客データ(insurance_policies / advisor_profiles)は owner_user_id = (select auth.uid()) の行のみ
 --     select/insert/update/delete を許可する。owner_user_id はクライアントの申告を一切信用せず、
 --     常にサーバー(APIハンドラ)が認証セッションから確定させた値を使う。RLSはその最終防衛線。
---   - users は id = auth.uid() の自分の行のみ。
+--   - users は id = (select auth.uid()) の自分の行のみ。
 --   - audit_logs には認証コード・セッション・証券番号全文・健康情報などの機密情報を記録しない。
 --   - rate_limit_events はメールアドレス/IPを生のまま保持せずハッシュ化して記録する運用専用テーブル。
 --     顧客データではないため、クライアント/顧客からの参照ポリシーは一切用意しない(サーバーのみが
@@ -114,6 +114,7 @@ create index idx_rate_limit_events_lookup on public.rate_limit_events (subject_h
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -145,43 +146,43 @@ alter table public.rate_limit_events enable row level security;
 -- users: 自分の行のみ参照・更新可。挿入は自分のidでのみ(初回ログイン時にAPIが作成)。削除はRLS経由では不可
 -- (退会はAPIがservice roleで auth.users ごと削除するため、通常操作からは行削除経路自体を与えない)。
 create policy "users_select_own" on public.users
-  for select using (id = auth.uid());
+  for select using (id = (select auth.uid()));
 
 create policy "users_insert_self" on public.users
-  for insert with check (id = auth.uid());
+  for insert with check (id = (select auth.uid()));
 
 create policy "users_update_own" on public.users
-  for update using (id = auth.uid()) with check (id = auth.uid());
+  for update using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
--- insurance_policies: 完全に owner_user_id = auth.uid() の行のみ
+-- insurance_policies: 完全に owner_user_id = (select auth.uid()) の行のみ
 create policy "policies_select_own" on public.insurance_policies
-  for select using (owner_user_id = auth.uid());
+  for select using (owner_user_id = (select auth.uid()));
 
 create policy "policies_insert_own" on public.insurance_policies
-  for insert with check (owner_user_id = auth.uid());
+  for insert with check (owner_user_id = (select auth.uid()));
 
 create policy "policies_update_own" on public.insurance_policies
-  for update using (owner_user_id = auth.uid()) with check (owner_user_id = auth.uid());
+  for update using (owner_user_id = (select auth.uid())) with check (owner_user_id = (select auth.uid()));
 
 create policy "policies_delete_own" on public.insurance_policies
-  for delete using (owner_user_id = auth.uid());
+  for delete using (owner_user_id = (select auth.uid()));
 
--- advisor_profiles: 同様に owner_user_id = auth.uid() の行のみ
+-- advisor_profiles: 同様に owner_user_id = (select auth.uid()) の行のみ
 create policy "advisor_select_own" on public.advisor_profiles
-  for select using (owner_user_id = auth.uid());
+  for select using (owner_user_id = (select auth.uid()));
 
 create policy "advisor_insert_own" on public.advisor_profiles
-  for insert with check (owner_user_id = auth.uid());
+  for insert with check (owner_user_id = (select auth.uid()));
 
 create policy "advisor_update_own" on public.advisor_profiles
-  for update using (owner_user_id = auth.uid()) with check (owner_user_id = auth.uid());
+  for update using (owner_user_id = (select auth.uid())) with check (owner_user_id = (select auth.uid()));
 
 -- audit_logs: 挿入・参照とも自分の行のみ(将来の「自分の操作履歴」表示に備える。今回のUIでは未使用)。
 create policy "audit_select_own" on public.audit_logs
-  for select using (owner_user_id = auth.uid());
+  for select using (owner_user_id = (select auth.uid()));
 
 create policy "audit_insert_own" on public.audit_logs
-  for insert with check (owner_user_id = auth.uid());
+  for insert with check (owner_user_id = (select auth.uid()));
 
 -- rate_limit_events: 顧客向けポリシーは意図的に何も定義しない(=RLSにより全拒否)。
 -- サーバーはこのテーブルの読み書きに SUPABASE_SERVICE_ROLE_KEY を使う(RLSをバイパスする唯一の用途)。
