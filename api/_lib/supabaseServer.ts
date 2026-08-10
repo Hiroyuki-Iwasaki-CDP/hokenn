@@ -41,9 +41,17 @@ export function createSupabaseServerClient(req: VercelRequest, res: VercelRespon
       setAll(cookiesToSet) {
         const existing = res.getHeader('Set-Cookie')
         const existingArr = Array.isArray(existing) ? existing.map(String) : existing ? [String(existing)] : []
-        const newCookies = cookiesToSet.map(({ name, value, options }) =>
-          serialize(name, value, { ...COOKIE_OPTIONS, ...options }),
-        )
+        const newCookies = cookiesToSet.map(({ name, value, options }) => {
+          const finalOptions = { ...COOKIE_OPTIONS, ...options }
+          // @supabase/ssrは実際にセッションを書き込む際、cookieOptionsで渡したmaxAgeを無視して
+          // 常に自前のデフォルト(400日、Chromeの上限いっぱい)で上書きする(ライブラリの仕様)。
+          // それを検知して14日の上限を強制し直す。ただしCookie削除時(maxAge:0、ログアウト等)は
+          // そのまま尊重しないと削除できなくなるため除外する。
+          if (options.maxAge !== 0) {
+            finalOptions.maxAge = SESSION_MAX_AGE_SECONDS
+          }
+          return serialize(name, value, finalOptions)
+        })
         res.setHeader('Set-Cookie', [...existingArr, ...newCookies])
       },
     },
