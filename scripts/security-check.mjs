@@ -166,6 +166,30 @@ async function main() {
     assert(stillThereRes.status === 200, '顧客Bの契約は影響を受けず残っている')
   }
 
+  console.log('3.5 担当者の未設定連絡先はnullのまま返る(未設定ボタンを表示しないための前提条件)')
+  {
+    const putRes = await authedFetch(cookieA, '/api/advisor', {
+      method: 'PUT',
+      body: JSON.stringify({
+        advisorName: 'テスト担当者',
+        agencyName: null,
+        title: null,
+        phone: '0120-000-000',
+        email: null,
+        officialLineUrl: null,
+        contactHours: null,
+        isAcceptingInquiries: true,
+      }),
+    })
+    assert(putRes.ok, '担当者情報の一部項目のみの保存は成功する')
+
+    const getRes = await authedFetch(cookieA, '/api/advisor')
+    const { advisor } = await getRes.json()
+    assert(advisor.phone === '0120-000-000', '設定した電話番号はそのまま返る')
+    assert(advisor.email === null, '未設定のメールはnullのまま返る(フロントは非表示にする)')
+    assert(advisor.officialLineUrl === null, '未設定の公式LINEはnullのまま返る(フロントは非表示にする)')
+  }
+
   console.log('4. 認証コードは再利用できない')
   {
     const { data: linkData } = await admin.auth.admin.generateLink({ type: 'magiclink', email: EMAIL_A })
@@ -218,8 +242,9 @@ async function main() {
   }
 
   console.log(
-    '\n注記: 認証コードの「有効期限切れ」の自動テストは、実際の有効期限(Supabaseダッシュボードの設定)まで' +
-      '待つ必要があるため本スクリプトには含めていません。手動で時間をおいて確認してください。',
+    '\n注記: 認証コードの「有効期限切れ」は、実際の有効期限(通常10分)まで待つ必要があるため本' +
+      'スクリプトには含めていない。otp_expiryを一時的に短くしての手動確認では、期限切れコードが' +
+      '正しく拒否される(400)ことを確認済み。',
   )
 
   console.log('\n後片付け: テスト用アカウントを削除しています…')
