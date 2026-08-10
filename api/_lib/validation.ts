@@ -16,10 +16,12 @@ const CATEGORY_IDS = [
 
 const POLICY_STATUSES = ['active', 'lapsed', 'cancelled', 'matured'] as const
 
+// 空文字列も許容する(mappers.tsのpolicyInputToRowが `input.contractDate || null` で
+// 空文字列をnullへ正規化する前提のため、ここで弾くとクライアントとの契約が崩れる)。
 const isoDate = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, '日付の形式が正しくありません。')
+  .regex(/^(\d{4}-\d{2}-\d{2})?$/, '日付の形式が正しくありません。')
 
 export const emailSchema = z.string().trim().toLowerCase().email('メールアドレスの形式が正しくありません。').max(254)
 
