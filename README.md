@@ -165,7 +165,7 @@ npm run lint
 
 ## 削除済みデータの取り扱い
 
-- 保険を1件削除する操作(`DELETE /api/policies/:id`)はソフトデリート(`deleted_at`を設定)。物理削除は行わず、`supabase/migrations/0001_init.sql` にコメントで残した `pg_cron` ジョブ(要Supabaseダッシュボードでの有効化)で一定期間後にパージできる
+- 保険を1件削除する操作(`DELETE /api/policies/:id`)はソフトデリート(`deleted_at`を設定)。物理削除は行わず、`supabase/migrations/0002_pg_cron_purge.sql` で登録した `pg_cron` ジョブが毎日3時に30日経過分を完全削除する
 - 退会(`POST /api/account/delete`)は `auth.users` を完全に削除し、外部キーの `ON DELETE CASCADE` により顧客データ(保険・担当者情報)も即座に完全削除される。二度と同じメールアドレスでログインできなくなる
 - `audit_logs.owner_user_id` は `ON DELETE SET NULL` のため、個人を特定できない形の操作履歴のみが残る
 
@@ -174,8 +174,8 @@ npm run lint
 - **バックアップ**: Supabaseの無料プランには自動バックアップ/PITRが無い。β版の間はデータ量が少ないため許容しているが、本格運用前に有料プランへの切り替え、または `pg_dump` を使った定期バックアップの仕組み化を推奨する
 - **メール到達性**: カスタムSMTP(Resend等)を設定しない場合、Supabase標準メールの送信数制限により複数人での同時テストが難しい
 - **依存パッケージの脆弱性**: `@vercel/node`(開発時のみ使用するビルドツール)が内部で依存する一部パッケージ(esbuild/undici等)に上流未修正の脆弱性が`npm audit`で報告される。いずれも本番の関数コードには含まれない開発時専用の依存であり、CIでは記録のみ行い失敗はさせていない。定期的に `npm audit` を確認すること
-- **認証コード有効期限のテスト**: 自動テストでは検証していない(手動確認が必要)
 - **監査ログの閲覧画面**: 未実装(`audit_logs`テーブル自体とAPI経由での記録は実装済み)
+- **セッションの絶対期限(サーバー側)**: `auth.sessions` の `timebox` はSupabase Proプラン以上が必要なため無料プランでは未設定。再認証の強制はBFF側のCookie有効期限(14日)のみで行っている
 
 ## 注意事項
 
