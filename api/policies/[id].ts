@@ -2,10 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
 import { requireSessionUser } from '../_lib/session.js'
 import { policyInputSchema } from '../_lib/validation.js'
-import { policyInputToRow, policyRowToApi, type PolicyRow } from '../_lib/mappers.js'
+import { policyInputToRow, policyRowToApi, riderInputsToRows, type PolicyRow } from '../_lib/mappers.js'
 import { writeAuditLog } from '../_lib/audit.js'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const POLICY_SELECT = '*, riders:policy_riders(*)'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireSessionUser(req, res)
@@ -19,7 +20,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // 他の顧客の契約IDを指定しても取得できないようにする(RLSによる二重防御も有効)。
     const { data, error } = await session.supabase
       .from('insurance_policies')
-      .select('*')
+      .select(POLICY_SELECT)
       .eq('id', id)
       .eq('owner_user_id', session.userId)
       .is('deleted_at', null)
@@ -27,7 +28,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
     if (!data) throw new HttpError(404, '指定された保険が見つかりませんでした。')
-    sendJson(res, 200, { policy: policyRowToApi(data as PolicyRow) })
+    sendJson(res, 200, { policy: policyRowToApi(data as unknown as PolicyRow) })
     return
   }
 
@@ -36,20 +37,37 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     const input = policyInputSchema.parse(await readJsonBody(req))
     const row = policyInputToRow(input)
 
-    const { data, error } = await session.supabase
+    const { data: updated, error } = await session.supabase
       .from('insurance_policies')
       .update(row)
       .eq('id', id)
       .eq('owner_user_id', session.userId)
       .is('deleted_at', null)
-      .select('*')
+      .select('id')
       .maybeSingle()
 
     if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
-    if (!data) throw new HttpError(404, '指定された保険が見つかりませんでした。')
+    if (!updated) throw new HttpError(404, '指定された保険が見つかりませんでした。')
+
+    // 特約は「まるごと置き換え」で保存する(フォームが常にリスト全体を送ってくる前提)。
+    const { error: deleteRidersError } = await session.supabase.from('policy_riders').delete().eq('policy_id', id)
+    if (deleteRidersError) throw new HttpError(500, 'サーバーエラーが発生しました。')
+
+    const riderRows = riderInputsToRows(input, id, session.userId)
+    if (riderRows.length > 0) {
+      const { error: riderError } = await session.supabase.from('policy_riders').insert(riderRows)
+      if (riderError) throw new HttpError(500, 'サーバーエラーが発生しました。')
+    }
+
+    const { data: full, error: fetchError } = await session.supabase
+      .from('insurance_policies')
+      .select(POLICY_SELECT)
+      .eq('id', id)
+      .single()
+    if (fetchError) throw new HttpError(500, 'サーバーエラーが発生しました。')
 
     await writeAuditLog(session.supabase, session.userId, 'update', 'insurance_policy', id)
-    sendJson(res, 200, { policy: policyRowToApi(data as PolicyRow) })
+    sendJson(res, 200, { policy: policyRowToApi(full as unknown as PolicyRow) })
     return
   }
 

@@ -2,12 +2,19 @@ import { Link } from 'react-router-dom'
 import { Pencil, ChevronRight } from 'lucide-react'
 import type { InsurancePolicy } from '../../types/insurance'
 import { getCategory } from '../../lib/categories'
-import { formatDate, formatYen, maskPolicyNumber } from '../../lib/format'
+import { PREMIUM_FREQUENCY_LABEL } from '../../lib/status'
+import { formatDate, formatYen, formatYenPerDay, maskPolicyNumber } from '../../lib/format'
 import CategoryIcon from '../common/CategoryIcon'
 import PolicyStatusBadge from '../common/PolicyStatusBadge'
 
 export default function PolicyCard({ policy }: { policy: InsurancePolicy }) {
   const meta = getCategory(policy.category)
+  const headlineValue = policy[meta.headline]
+  const headlineText =
+    meta.headline === 'hospitalizationDaily' ? formatYenPerDay(headlineValue) : formatYen(headlineValue)
+
+  const endDate = policy.maturityDate ?? policy.renewalDate
+  const endLabel = policy.maturityDate ? '満期日' : policy.renewalDate ? '更新日' : null
 
   return (
     <div className="flex flex-col rounded-2xl border border-line bg-white p-5 transition-shadow hover:shadow-md">
@@ -34,24 +41,24 @@ export default function PolicyCard({ policy }: { policy: InsurancePolicy }) {
       )}
 
       <div className="mt-4 rounded-xl bg-plane px-3.5 py-3">
-        <p className="text-[11px] font-semibold text-ink-muted">{meta.label}</p>
-        <p className="line-clamp-2 text-sm text-ink">{policy.coverageSummary || '保障内容の要約は未登録です'}</p>
+        <p className="text-[11px] font-semibold text-ink-muted">{meta.headlineLabel}</p>
+        <p className="text-lg font-bold text-ink tabular-nums">{headlineText}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 text-xs">
         <div>
-          <p className="text-ink-muted">月額保険料</p>
-          <p className="font-semibold text-ink tabular-nums">{formatYen(policy.monthlyPremium)}</p>
+          <p className="text-ink-muted">保険料</p>
+          <p className="font-semibold text-ink tabular-nums">
+            {formatYen(policy.premiumAmount)} / {PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]}
+          </p>
         </div>
         <div>
           <p className="text-ink-muted">契約日</p>
           <p className="font-semibold text-ink tabular-nums">{formatDate(policy.contractDate)}</p>
         </div>
         <div className="col-span-2">
-          <p className="text-ink-muted">更新日</p>
-          <p className="font-semibold text-ink tabular-nums">
-            {policy.renewalDate ? formatDate(policy.renewalDate) : '終身(期限なし)'}
-          </p>
+          <p className="text-ink-muted">{endLabel ?? '保障期間'}</p>
+          <p className="font-semibold text-ink tabular-nums">{endDate ? formatDate(endDate) : '終身(期限なし)'}</p>
         </div>
       </div>
 

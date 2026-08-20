@@ -33,7 +33,7 @@ export default function Compare() {
         <p className="text-xs font-semibold tracking-wide text-brand-600 uppercase">Compare Coverage</p>
         <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">保障を比べる</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          同じ分野に複数の保険がある場合に、月額保険料の内訳をまとめて確認できます。
+          同じ分野に複数の保険がある場合に、保障額の内訳をまとめて確認できます。
         </p>
       </div>
 
@@ -65,7 +65,7 @@ export default function Compare() {
       )}
 
       <p className="rounded-xl bg-plane px-4 py-3 text-xs leading-relaxed text-ink-secondary">
-        この画面は登録された内容をもとに月額保険料を合計して表示しているだけです。必要な保障額の判断や、保険の解約・加入のご提案は行っていません。内容のご確認は保険証券や保険会社にお問い合わせください。
+        この画面は登録された内容をもとに保障額を合計して表示しているだけです。必要な保障額の判断や、保険の解約・加入のご提案は行っていません。内容のご確認は保険証券や保険会社にお問い合わせください。
       </p>
     </div>
   )

@@ -26,10 +26,18 @@ const InsuranceContext = createContext<InsuranceContextValue | null>(null)
 function toApiPayload(input: PolicyInput) {
   return {
     ...input,
+    contractorName: input.contractorName.trim() || null,
+    beneficiary: input.beneficiary.trim() || null,
+    mainContractName: input.mainContractName.trim() || null,
     policyNumber: input.policyNumber.trim() || null,
     coverageSummary: input.coverageSummary.trim() || null,
     contractDate: input.contractDate || null,
     renewalDate: input.renewalDate || null,
+    maturityDate: input.maturityDate || null,
+    premiumEndDate: input.premiumEndDate || null,
+    cashValueNote: input.cashValueNote.trim() || null,
+    agentName: input.agentName.trim() || null,
+    contactInfo: input.contactInfo.trim() || null,
     memo: input.memo.trim() || null,
   }
 }

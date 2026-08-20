@@ -3,12 +3,12 @@ import { Info } from 'lucide-react'
 import type { ComparisonGroup } from '../../lib/compare'
 import { getCategory } from '../../lib/categories'
 import { segmentColor } from '../../lib/color'
-import { formatYen } from '../../lib/format'
+import { formatYen, formatYenPerDay } from '../../lib/format'
 
 export default function ComparisonBar({ group }: { group: ComparisonGroup }) {
   const meta = getCategory(group.category)
   const Icon = meta.icon
-  const formatAmount = (v: number) => formatYen(v)
+  const formatAmount = (v: number) => (group.unit === '円/日' ? formatYenPerDay(v) : formatYen(v))
   const overlapping = group.items.length > 1
 
   return (

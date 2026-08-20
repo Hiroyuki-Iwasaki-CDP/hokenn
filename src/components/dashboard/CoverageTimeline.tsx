@@ -21,7 +21,7 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
     }
     const starts = withStartDate.map((p) => new Date(p.contractDate as string).getTime())
     const finiteEnds = withStartDate
-      .map((p) => p.renewalDate)
+      .map((p) => p.maturityDate ?? p.renewalDate)
       .filter((d): d is string => !!d)
       .map((d) => new Date(d).getTime())
 
@@ -43,8 +43,9 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
       .sort((a, b) => new Date(a.contractDate as string).getTime() - new Date(b.contractDate as string).getTime())
       .map((p) => {
         const start = new Date(p.contractDate as string).getTime()
-        const isOpenEnded = !p.renewalDate
-        const end = p.renewalDate ? new Date(p.renewalDate).getTime() : maxEnd
+        const explicitEnd = p.maturityDate ?? p.renewalDate
+        const isOpenEnded = !explicitEnd
+        const end = explicitEnd ? new Date(explicitEnd).getTime() : maxEnd
         const startPct = ((start - minStart) / (maxEnd - minStart)) * 100
         const endPct = ((end - minStart) / (maxEnd - minStart)) * 100
         return { policy: p, startPct, endPct: Math.max(endPct, startPct + 1.5), isOpenEnded }
@@ -127,7 +128,7 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
                           : undefined,
                       }}
                       title={`${meta.label}: ${formatDate(policy.contractDate)} 〜 ${
-                        isOpenEnded ? '終身' : formatDate(policy.renewalDate)
+                        isOpenEnded ? '終身' : formatDate(policy.maturityDate ?? policy.renewalDate)
                       }`}
                     />
                   </div>

@@ -3,6 +3,11 @@ export function formatYen(amount: number | undefined | null): string {
   return `${Math.round(amount).toLocaleString('ja-JP')}円`
 }
 
+export function formatYenPerDay(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null || Number.isNaN(amount)) return '—'
+  return `${Math.round(amount).toLocaleString('ja-JP')}円/日`
+}
+
 export function formatDate(iso: string | undefined | null): string {
   if (!iso) return '—'
   const d = new Date(iso)

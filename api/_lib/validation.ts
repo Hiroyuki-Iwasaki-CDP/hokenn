@@ -15,6 +15,8 @@ const CATEGORY_IDS = [
 ] as const
 
 const POLICY_STATUSES = ['active', 'lapsed', 'cancelled', 'matured'] as const
+const PREMIUM_FREQUENCIES = ['monthly', 'yearly', 'single'] as const
+const CONTRACT_TYPES = ['renewal', 'wholelife', 'termFixed', 'singlePayment'] as const
 
 // 空文字列も許容する(mappers.tsのpolicyInputToRowが `input.contractDate || null` で
 // 空文字列をnullへ正規化する前提のため、ここで弾くとクライアントとの契約が崩れる)。
@@ -37,20 +39,67 @@ export const verifyCodeSchema = z.object({
     .regex(/^\d{6}$/, '認証コードは6桁の数字で入力してください。'),
 })
 
+const optionalAmount = z
+  .number()
+  .finite()
+  .min(0, '0以上の金額を入力してください。')
+  .max(1_000_000_000, '金額の値が大きすぎます。')
+  .optional()
+  .nullable()
+
+const optionalAge = z.number().int().min(0).max(150).optional().nullable()
+
+const riderInputSchema = z.object({
+  name: z.string().trim().min(1, '特約名を入力してください。').max(100),
+  active: z.boolean(),
+  amount: optionalAmount,
+  note: z.string().trim().max(300).optional().nullable(),
+})
+
 export const policyInputSchema = z.object({
   insuredPersonName: z.string().trim().min(1, '保険の対象者を入力してください。').max(100),
+  contractorName: z.string().trim().max(100).optional().nullable(),
+  beneficiary: z.string().trim().max(100).optional().nullable(),
   category: z.enum(CATEGORY_IDS),
   insuranceCompany: z.string().trim().min(1, '保険会社を入力してください。').max(100),
   productName: z.string().trim().min(1, '商品名を入力してください。').max(150),
+  mainContractName: z.string().trim().max(150).optional().nullable(),
   policyNumber: z.string().trim().max(50).optional().nullable(),
-  monthlyPremium: z
+  riders: z.array(riderInputSchema).max(20, '特約は20件までです。').optional().default([]),
+
+  coverageAmount: optionalAmount,
+  hospitalizationDaily: optionalAmount,
+  surgeryBenefit: optionalAmount,
+  diagnosisBenefit: optionalAmount,
+
+  premiumAmount: z
     .number()
     .finite()
-    .min(0, '月額保険料は0以上で入力してください。')
-    .max(10_000_000, '月額保険料の値が大きすぎます。'),
+    .min(0, '保険料は0以上で入力してください。')
+    .max(10_000_000, '保険料の値が大きすぎます。'),
+  premiumFrequency: z.enum(PREMIUM_FREQUENCIES),
+
   coverageSummary: z.string().trim().max(500).optional().nullable(),
   contractDate: isoDate.optional().nullable(),
+  contractType: z.enum(CONTRACT_TYPES).optional().nullable(),
   renewalDate: isoDate.optional().nullable(),
+  maturityDate: isoDate.optional().nullable(),
+  coverageEndAge: optionalAge,
+  premiumEndDate: isoDate.optional().nullable(),
+  premiumEndAge: optionalAge,
+
+  hasCashValue: z.boolean().optional().default(false),
+  cashValueNote: z.string().trim().max(500).optional().nullable(),
+
+  agentName: z.string().trim().max(100).optional().nullable(),
+  contactInfo: z.string().trim().max(200).optional().nullable(),
+
+  attachmentNames: z
+    .array(z.string().trim().min(1).max(200))
+    .max(20, '添付は20件までです。')
+    .optional()
+    .default([]),
+
   status: z.enum(POLICY_STATUSES),
   memo: z.string().trim().max(1000).optional().nullable(),
 })
