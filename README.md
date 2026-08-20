@@ -101,9 +101,9 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 2. `Project Settings > API` から `Project URL` / `anon public key` / `service_role key` を控える(service_role keyは絶対に公開しない)
 3. `Authentication > Sign In / Providers > Email` でメールOTPを有効化し、`Allow new users to sign up`(自己登録)を**無効化**する(招待制にするため)
 4. `Authentication > Emails` で「Email OTP Expiration」を短め(例: 10分)に設定する
-5. `Authentication > SMTP Settings` に Resend 等のカスタムSMTPを設定する(Supabase標準メールは送信回数の制限が厳しいため、複数人でのテストには不向き)
-6. SQL Editor(または Supabase CLI)で `supabase/migrations/0001_init.sql` を実行する
-7. `Authentication > Users` で、招待したいテスターのメールアドレスを `Invite user` から追加する(このアプリには招待用の画面は無く、Supabaseダッシュボードから直接行う)
+5. `Authentication > Emails > SMTP Settings`(または `Project Settings > Authentication`)に Resend 等のカスタムSMTPを設定する。**これは任意ではなく必須**: Supabase無料プランの標準メール送信では認証コードのメールテンプレートをカスタマイズできず(送信自体はできても6桁コードを画面に表示できない)、`supabase config push` がテンプレート更新で400エラーになる。カスタムSMTPを設定して初めてテンプレートが反映できる
+6. SQL Editor(または Supabase CLI)で `supabase/migrations/` 配下のマイグレーションを順に実行する(`supabase db push` でまとめて適用可能)
+7. `Authentication > Users` で、招待したいテスターのメールアドレスを `Invite user`(または `Send invitation`)から追加する(このアプリには招待用の画面は無く、Supabaseダッシュボードから直接行う)。**プロジェクト切り替えを間違えないよう、URLのプロジェクトrefが正しいことを毎回確認すること**(複数のSupabaseプロジェクトを持っている場合、誤って別プロジェクトに招待すると認証コードが届かない・意図しないページに遷移する等の問題が起きる)
 
 ### 2. 環境変数
 
@@ -194,7 +194,7 @@ npm run lint
 ## 残っているリスク・既知の制約
 
 - **バックアップ**: Supabaseの無料プランには自動バックアップ/PITRが無い。β版の間はデータ量が少ないため許容しているが、本格運用前に有料プランへの切り替え、または `pg_dump` を使った定期バックアップの仕組み化を推奨する
-- **メール到達性**: カスタムSMTP(Resend等)を設定しない場合、Supabase標準メールの送信数制限により複数人での同時テストが難しい
+- **メール到達性**: 本番プロジェクトはカスタムSMTP(Resend)設定済み・独自の認証コードメールテンプレート(`supabase/templates/magic_link.html`)反映済みで、実際のログインを確認済み。Resendの無料枠(目安: 1日100通)を超える利用が見込まれる場合は上位プランや独自ドメイン送信の検討が必要
 - **依存パッケージの脆弱性**: `@vercel/node`(開発時のみ使用するビルドツール)が内部で依存する一部パッケージ(esbuild/undici等)に上流未修正の脆弱性が`npm audit`で報告される。いずれも本番の関数コードには含まれない開発時専用の依存であり、CIでは記録のみ行い失敗はさせていない。定期的に `npm audit` を確認すること
 - **監査ログの閲覧画面**: 未実装(`audit_logs`テーブル自体とAPI経由での記録は実装済み)
 - **セッションの絶対期限(サーバー側)**: `auth.sessions` の `timebox` はSupabase Proプラン以上が必要なため無料プランでは未設定。再認証の強制はBFF側のCookie有効期限(14日)のみで行っている
