@@ -132,9 +132,21 @@ export interface AdvisorProfile {
 
 export type ManageScope = 'self' | 'family'
 
+export type UserRole = 'customer' | 'advisor'
+
 export interface AuthUser {
   id: string
   email: string
   displayName: string | null
   manageScope: ManageScope | null
+  role: UserRole
+  advisorId: string | null
+}
+
+export interface AdvisorClient {
+  id: string
+  email: string
+  displayName: string | null
+  onboarded: boolean
+  invitedAt: string
 }

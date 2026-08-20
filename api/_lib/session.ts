@@ -39,3 +39,21 @@ export async function requireSessionUser(req: VercelRequest, res: VercelResponse
   }
   return session
 }
+
+export interface AdvisorSessionContext extends SessionContext {
+  role: 'advisor'
+}
+
+/**
+ * FP専用エンドポイント向け。通常のセッション確認に加えて role='advisor' であることを
+ * 確認する(顧客アカウントがFP用APIを呼べないようにするため)。
+ * role列挙は毎回DBに問い合わせるため、この確認が必要なFP専用エンドポイントでのみ使う。
+ */
+export async function requireAdvisorSession(req: VercelRequest, res: VercelResponse): Promise<AdvisorSessionContext> {
+  const session = await requireSessionUser(req, res)
+  const { data, error } = await session.supabase.from('users').select('role').eq('id', session.userId).maybeSingle()
+  if (error || data?.role !== 'advisor') {
+    throw new HttpError(403, 'この操作は担当者アカウントでのみ行えます。')
+  }
+  return { ...session, role: 'advisor' }
+}

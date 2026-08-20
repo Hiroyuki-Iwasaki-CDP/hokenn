@@ -19,7 +19,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         terms_accepted_at: new Date().toISOString(),
       })
       .eq('id', session.userId)
-      .select('display_name, manage_scope, terms_accepted_at')
+      .select('display_name, manage_scope, terms_accepted_at, role, advisor_id')
       .single()
 
     if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
@@ -31,6 +31,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         email: session.email,
         displayName: data.display_name,
         manageScope: data.manage_scope,
+        role: data.role,
+        advisorId: data.advisor_id,
       },
     })
     return

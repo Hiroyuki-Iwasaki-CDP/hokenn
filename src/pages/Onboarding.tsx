@@ -8,7 +8,8 @@ import type { AuthUser, ManageScope } from '../types/insurance'
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { setUser } = useAuth()
+  const { user, setUser } = useAuth()
+  const isAdvisor = user?.role === 'advisor'
 
   const [displayName, setDisplayName] = useState('')
   const [manageScope, setManageScope] = useState<ManageScope>('self')
@@ -27,12 +28,12 @@ export default function Onboarding() {
     try {
       const data = await api.put<{ user: AuthUser }>('/api/profile', {
         displayName: displayName.trim(),
-        manageScope,
+        manageScope: isAdvisor ? undefined : manageScope,
         termsAccepted: true,
         sensitiveInfoAcknowledged: true,
       })
       setUser(data.user)
-      navigate('/', { replace: true })
+      navigate(isAdvisor ? '/advisor' : '/', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'エラーが発生しました。しばらくしてから再度お試しください。')
     } finally {
@@ -67,25 +68,27 @@ export default function Onboarding() {
             />
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-semibold text-ink">管理したい対象</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(['self', 'family'] as const).map((scope) => (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => setManageScope(scope)}
-                  className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
-                    manageScope === scope
-                      ? 'border-brand-500 bg-brand-50 text-brand-800'
-                      : 'border-line text-ink-secondary hover:bg-plane'
-                  }`}
-                >
-                  {scope === 'self' ? '自分のみ' : '家族も含める'}
-                </button>
-              ))}
+          {!isAdvisor && (
+            <div>
+              <p className="mb-2 text-sm font-semibold text-ink">管理したい対象</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['self', 'family'] as const).map((scope) => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => setManageScope(scope)}
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      manageScope === scope
+                        ? 'border-brand-500 bg-brand-50 text-brand-800'
+                        : 'border-line text-ink-secondary hover:bg-plane'
+                    }`}
+                  >
+                    {scope === 'self' ? '自分のみ' : '家族も含める'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <BetaNotice />
 

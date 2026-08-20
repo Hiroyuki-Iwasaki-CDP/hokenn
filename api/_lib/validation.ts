@@ -39,6 +39,10 @@ export const verifyCodeSchema = z.object({
     .regex(/^\d{6}$/, '認証コードは6桁の数字で入力してください。'),
 })
 
+export const inviteClientSchema = z.object({
+  email: emailSchema,
+})
+
 const optionalAmount = z
   .number()
   .finite()

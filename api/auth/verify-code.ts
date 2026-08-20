@@ -31,10 +31,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const email = data.user.email ?? body.email
 
   // 初回ログイン時は public.users 行を作成する(RLSにより自分のidでのみ挿入可能)。
+  // role/advisor_idは指定しない(既存行なら維持、新規行ならDBのデフォルト値'customer'が入る)。
+  // FPアカウントへの昇格はSupabaseダッシュボード側で手動で行う運用のため、ここでは絶対に
+  // クライアント入力からroleを受け取らない。
   const { data: userRow, error: upsertError } = await supabase
     .from('users')
     .upsert({ id: userId, email }, { onConflict: 'id', ignoreDuplicates: false })
-    .select('terms_accepted_at, display_name')
+    .select('terms_accepted_at, display_name, role, advisor_id')
     .single()
 
   if (upsertError) {
@@ -46,7 +49,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   sendJson(res, 200, {
     ok: true,
     needsOnboarding: !userRow?.terms_accepted_at,
-    user: { id: userId, email, displayName: userRow?.display_name ?? null },
+    user: {
+      id: userId,
+      email,
+      displayName: userRow?.display_name ?? null,
+      role: userRow?.role ?? 'customer',
+      advisorId: userRow?.advisor_id ?? null,
+    },
   })
 }
 

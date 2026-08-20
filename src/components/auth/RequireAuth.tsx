@@ -12,13 +12,31 @@ function LoadingScreen() {
   )
 }
 
-// 未ログインなら /login へ。オンボーディング未完了なら /onboarding へ強制する。
+function homePathFor(role: 'customer' | 'advisor' | undefined): string {
+  return role === 'advisor' ? '/advisor' : '/'
+}
+
+// 顧客向けダッシュボード専用。未ログインなら/loginへ、未完了オンボーディングなら/onboardingへ、
+// FPアカウントなら/advisorへ(顧客用画面とFP用画面は完全に分離する)。
 export default function RequireAuth() {
-  const { status, needsOnboarding } = useAuth()
+  const { status, needsOnboarding, user } = useAuth()
 
   if (status === 'loading') return <LoadingScreen />
   if (status === 'unauthenticated') return <Navigate to="/login" replace />
   if (needsOnboarding) return <Navigate to="/onboarding" replace />
+  if (user?.role === 'advisor') return <Navigate to="/advisor" replace />
+
+  return <Outlet />
+}
+
+// FP向けダッシュボード専用。顧客アカウントは顧客用トップへ戻す。
+export function RequireAdvisor() {
+  const { status, needsOnboarding, user } = useAuth()
+
+  if (status === 'loading') return <LoadingScreen />
+  if (status === 'unauthenticated') return <Navigate to="/login" replace />
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />
+  if (user?.role !== 'advisor') return <Navigate to="/" replace />
 
   return <Outlet />
 }
@@ -33,12 +51,14 @@ export function RequireAuthOnly() {
   return <Outlet />
 }
 
-// /login, /login/verify 専用。既にログイン済みならホームへ戻す。
+// /login, /login/verify 専用。既にログイン済みなら役割に応じたホームへ戻す。
 export function RedirectIfAuthenticated() {
-  const { status, needsOnboarding } = useAuth()
+  const { status, needsOnboarding, user } = useAuth()
 
   if (status === 'loading') return <LoadingScreen />
-  if (status === 'authenticated') return <Navigate to={needsOnboarding ? '/onboarding' : '/'} replace />
+  if (status === 'authenticated') {
+    return <Navigate to={needsOnboarding ? '/onboarding' : homePathFor(user?.role)} replace />
+  }
 
   return <Outlet />
 }

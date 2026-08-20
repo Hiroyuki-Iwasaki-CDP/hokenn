@@ -6,13 +6,17 @@ import type { AdvisorProfile } from '../../types/insurance'
 
 export default function AdvisorCard() {
   const [advisor, setAdvisor] = useState<AdvisorProfile | null>(null)
+  const [managedByAdvisorAccount, setManagedByAdvisorAccount] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [showContacts, setShowContacts] = useState(false)
 
   useEffect(() => {
     api
-      .get<{ advisor: AdvisorProfile | null }>('/api/advisor')
-      .then((data) => setAdvisor(data.advisor))
+      .get<{ advisor: AdvisorProfile | null; managedByAdvisorAccount: boolean }>('/api/my-advisor')
+      .then((data) => {
+        setAdvisor(data.advisor)
+        setManagedByAdvisorAccount(data.managedByAdvisorAccount)
+      })
       .finally(() => setLoaded(true))
   }, [])
 
@@ -21,10 +25,12 @@ export default function AdvisorCard() {
   if (!advisor || !advisor.advisorName) {
     return (
       <div className="rounded-xl bg-white/5 px-3 py-3 text-xs text-brand-100">
-        <p>担当FPの情報が未登録です。</p>
-        <Link to="/settings" className="mt-1 inline-block font-bold text-white hover:underline">
-          設定から登録する
-        </Link>
+        <p>{managedByAdvisorAccount ? '担当者のプロフィールが未設定です。' : '担当FPの情報が未登録です。'}</p>
+        {!managedByAdvisorAccount && (
+          <Link to="/settings" className="mt-1 inline-block font-bold text-white hover:underline">
+            設定から登録する
+          </Link>
+        )}
       </div>
     )
   }

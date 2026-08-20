@@ -41,6 +41,7 @@ export default function Settings() {
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
 
   const [advisor, setAdvisor] = useState<AdvisorProfile | null>(null)
+  const [managedByAdvisorAccount, setManagedByAdvisorAccount] = useState(false)
   const [advisorLoading, setAdvisorLoading] = useState(true)
   const [advisorSaving, setAdvisorSaving] = useState(false)
   const [advisorMessage, setAdvisorMessage] = useState<string | null>(null)
@@ -51,8 +52,9 @@ export default function Settings() {
 
   useEffect(() => {
     api
-      .get<{ advisor: AdvisorProfile | null }>('/api/advisor')
-      .then((data) =>
+      .get<{ advisor: AdvisorProfile | null; managedByAdvisorAccount: boolean }>('/api/my-advisor')
+      .then((data) => {
+        setManagedByAdvisorAccount(data.managedByAdvisorAccount)
         setAdvisor(
           data.advisor ?? {
             advisorName: '',
@@ -64,8 +66,8 @@ export default function Settings() {
             contactHours: '',
             isAcceptingInquiries: true,
           },
-        ),
-      )
+        )
+      })
       .finally(() => setAdvisorLoading(false))
   }, [])
 
@@ -141,7 +143,7 @@ export default function Settings() {
         </button>
       </form>
 
-      <form onSubmit={handleAdvisorSubmit} className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-6">
+      <div className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
           <UsersIcon size={16} />
           担当FPの連絡先
@@ -151,8 +153,16 @@ export default function Settings() {
         </p>
         {advisorLoading || !advisor ? (
           <p className="text-sm text-ink-muted">読み込み中…</p>
+        ) : managedByAdvisorAccount ? (
+          <div className="space-y-1.5 rounded-xl bg-plane px-4 py-3 text-sm text-ink">
+            <p className="text-xs text-ink-muted">この情報は担当者ご本人が管理しています。</p>
+            <p className="font-semibold">{advisor.advisorName || '未設定'}</p>
+            {advisor.agencyName && <p className="text-ink-secondary">{advisor.agencyName}</p>}
+            {advisor.phone && <p className="text-ink-secondary">{advisor.phone}</p>}
+            {advisor.email && <p className="text-ink-secondary">{advisor.email}</p>}
+          </div>
         ) : (
-          <>
+          <form onSubmit={handleAdvisorSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextInput
                 label="担当者名"
@@ -215,9 +225,9 @@ export default function Settings() {
             >
               {advisorSaving ? '保存しています…' : '保存する'}
             </button>
-          </>
+          </form>
         )}
-      </form>
+      </div>
 
       <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-red-700">

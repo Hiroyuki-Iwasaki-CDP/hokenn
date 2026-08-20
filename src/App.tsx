@@ -1,13 +1,15 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
-import RequireAuth, { RedirectIfAuthenticated, RequireAuthOnly } from './components/auth/RequireAuth'
+import RequireAuth, { RedirectIfAuthenticated, RequireAdvisor, RequireAuthOnly } from './components/auth/RequireAuth'
 import AppLayout from './components/layout/AppLayout'
+import AdvisorLayout from './components/layout/AdvisorLayout'
 import DemoLayout from './components/layout/DemoLayout'
 import Login from './pages/Login'
 import VerifyCode from './pages/VerifyCode'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
+import AdvisorDashboard from './pages/AdvisorDashboard'
 import DemoDashboard from './pages/DemoDashboard'
 import PolicyList from './pages/PolicyList'
 import PolicyDetail from './pages/PolicyDetail'
@@ -32,6 +34,12 @@ export default function App() {
 
           <Route element={<RequireAuthOnly />}>
             <Route path="/onboarding" element={<Onboarding />} />
+          </Route>
+
+          <Route element={<RequireAdvisor />}>
+            <Route element={<AdvisorLayout />}>
+              <Route path="/advisor" element={<AdvisorDashboard />} />
+            </Route>
           </Route>
 
           <Route element={<RequireAuth />}>
