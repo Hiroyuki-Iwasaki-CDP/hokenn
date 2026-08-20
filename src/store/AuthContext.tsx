@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: AuthUser | null
   needsOnboarding: boolean
   refresh: () => Promise<void>
-  setUser: (user: AuthUser) => void
+  setUser: (user: AuthUser, needsOnboarding?: boolean) => void
   logout: () => Promise<void>
 }
 
@@ -47,9 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh()
   }, [refresh])
 
-  const setUser = useCallback((next: AuthUser) => {
+  // needsOnboardingは呼び出し側が明示的に指定する(既定はfalse = 「オンボーディング完了」)。
+  // ログイン直後(VerifyCode.tsx)はサーバーが返した実際の値を渡す必要がある。ここで無条件に
+  // falseへ倒すと、新規ユーザーが初回設定(表示名・規約同意)を一度も通らずにダッシュボードへ
+  // 直行してしまう(RedirectIfAuthenticatedがこのneedsOnboardingを見て遷移先を決めるため)。
+  const setUser = useCallback((next: AuthUser, needsOnboardingNext = false) => {
     setUserState(next)
-    setNeedsOnboarding(false)
+    setNeedsOnboarding(needsOnboardingNext)
     setStatus('authenticated')
   }, [])
 

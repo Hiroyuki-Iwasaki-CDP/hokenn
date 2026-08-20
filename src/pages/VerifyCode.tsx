@@ -44,7 +44,7 @@ export default function VerifyCode() {
     setSubmitting(true)
     try {
       const data = await api.post<VerifyResponse>('/api/auth/verify-code', { email, code })
-      setUser(data.user)
+      setUser(data.user, data.needsOnboarding)
       navigate(data.needsOnboarding ? '/onboarding' : '/', { replace: true })
     } catch (err) {
       setCode('')
