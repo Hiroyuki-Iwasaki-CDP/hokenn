@@ -1,12 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseServerClient } from './supabaseServer.js'
 import { HttpError } from './http.js'
+
+// SupabaseClient型を@supabase/supabase-jsから直接importせず、実際にクライアントを生成する
+// 関数から導出する。@supabase/ssr経由の型と直接importした型が、Vercelのビルド環境では
+// モジュール解決モードの違いにより「同じクラスなのに別の型」と判定されることがあるため。
+export type AppSupabaseClient = ReturnType<typeof createSupabaseServerClient>
 
 export interface SessionContext {
   userId: string
   email: string
-  supabase: SupabaseClient
+  supabase: AppSupabaseClient
 }
 
 /**

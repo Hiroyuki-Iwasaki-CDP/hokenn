@@ -1,11 +1,11 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AppSupabaseClient } from './session.js'
 
 /**
  * 最小限の操作ログを記録する(ベストエフォート。失敗しても本来の操作は継続する)。
  * 認証コード・セッショントークン・証券番号全文・健康情報などの機密情報は絶対に記録しない。
  */
 export async function writeAuditLog(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   ownerUserId: string,
   action: string,
   resourceType: string,
