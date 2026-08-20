@@ -54,11 +54,25 @@ alter table public.policy_riders enable row level security;
 create policy "riders_select_own" on public.policy_riders
   for select using (owner_user_id = (select auth.uid()));
 
+-- owner_user_id だけでなく、policy_id が指す保険も自分の所有であることを検証する
+-- (owner_user_idの詐称は防げても、他人の保険IDへの付け替えまでは防げないため)。
 create policy "riders_insert_own" on public.policy_riders
-  for insert with check (owner_user_id = (select auth.uid()));
+  for insert with check (
+    owner_user_id = (select auth.uid())
+    and exists (
+      select 1 from public.insurance_policies p
+      where p.id = policy_id and p.owner_user_id = (select auth.uid())
+    )
+  );
 
 create policy "riders_update_own" on public.policy_riders
-  for update using (owner_user_id = (select auth.uid())) with check (owner_user_id = (select auth.uid()));
+  for update using (owner_user_id = (select auth.uid())) with check (
+    owner_user_id = (select auth.uid())
+    and exists (
+      select 1 from public.insurance_policies p
+      where p.id = policy_id and p.owner_user_id = (select auth.uid())
+    )
+  );
 
 create policy "riders_delete_own" on public.policy_riders
   for delete using (owner_user_id = (select auth.uid()));
