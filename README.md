@@ -39,13 +39,35 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 
 `supabase/migrations/0001_init.sql` を参照。以下の4テーブルを基本とし、運用上必要な最小限の列・テーブルを追加しています。
 
-- `users` — 認証済み顧客のプロフィール。`manage_scope`(自分のみ/家族も含める)・`terms_accepted_at`(利用規約等への同意記録)を追加
+- `users` — 認証済みユーザーのプロフィール。`role`(`customer`/`advisor`)・`advisor_id`(顧客が紐づく担当FP)・`manage_scope`(自分のみ/家族も含める)・`terms_accepted_at`(利用規約等への同意記録)を追加
 - `insurance_policies` — 顧客が登録した保険契約(証券画像・診断書等の機密情報は保存しない)
-- `advisor_profiles` — 担当FPの連絡先情報。「相談受付状況」表示用に `is_accepting_inquiries` を追加
+- `advisor_profiles` — FP自身のプロフィール(FPアカウントに紐づく顧客からは読み取り専用で見える)。FP未設定の顧客は自分の行を手動管理するフォールバックとしても使う。「相談受付状況」表示用に `is_accepting_inquiries` を追加
 - `audit_logs` — 最小限の操作ログ(認証コード・トークン・証券番号全文・健康情報は記録しない)
 - `rate_limit_events` — 認証コードの送信回数・試行回数の制限用。メールアドレス/IPはハッシュ化して記録する運用専用テーブル(顧客データではない)
 
 全テーブルでRow Level Securityを有効化し、`insurance_policies` / `advisor_profiles` は `owner_user_id = auth.uid()` の行のみ操作可能です。`owner_user_id` はクライアントの送信値を一切信用せず、常にサーバーが認証セッションから確定させます。
+
+## 複数FP対応
+
+実際の複数のFPが、それぞれ自分の顧客を招待して使う運用に対応しています。
+
+- **役割**: `users.role` が `customer`(既定値)か `advisor` かで顧客用画面(`/`)とFP用画面(`/advisor`)を完全に分離する。相互に行き来はできない
+- **FPにできること**: 自分の顧客の招待(`POST /api/advisor/clients`)、自分の顧客一覧の閲覧(`GET /api/advisor/clients` — 氏名・メール・登録状況のみ)、自分自身のプロフィール編集(`/api/advisor`)
+- **FPにできないこと**: 顧客の保険データ(`insurance_policies`)には一切アクセスできない。他のFPの顧客も見えない
+- **顧客とFPの紐づけ**: FPが顧客を招待した時点で `users.advisor_id` が自動設定される。紐づいた顧客のダッシュボードには、そのFPの `advisor_profiles` が自動表示される(`GET /api/my-advisor`)。紐づきの無い顧客は従来どおり手動入力にフォールバックする
+- **FPアカウントの作成(β版は手動運用)**: セルフサインアップ画面は作らない。以下の手順で運用者(あなた)が作成する
+  1. Supabaseダッシュボード `Authentication > Users > Send invitation` でFPのメールアドレスを招待する
+  2. SQL Editorで以下を実行し、`role` を `advisor` にする(招待直後、まだ`public.users`行が無い場合は自動的に作成される)
+
+     ```sql
+     insert into public.users (id, email, role)
+     select id, email, 'advisor'
+     from auth.users
+     where email = 'fp@example.com'
+     on conflict (id) do update set role = 'advisor';
+     ```
+
+  3. FP本人が `/login` からログインし、初期設定(表示名・規約同意)を済ませると `/advisor` のFP用ダッシュボードが使えるようになる
 
 ## 認証フロー
 
