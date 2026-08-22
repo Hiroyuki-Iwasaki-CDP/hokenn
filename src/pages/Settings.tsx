@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, User, Users as UsersIcon } from 'lucide-react'
+import { AlertTriangle, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../store/AuthContext'
-import type { AdvisorProfile, AuthUser } from '../types/insurance'
+import type { AdvisorProfile, AuthUser, PolicySharingStatus } from '../types/insurance'
 
 function TextInput({
   label,
@@ -46,6 +46,13 @@ export default function Settings() {
   const [advisorSaving, setAdvisorSaving] = useState(false)
   const [advisorMessage, setAdvisorMessage] = useState<string | null>(null)
 
+  const [sharing, setSharing] = useState<PolicySharingStatus | null>(null)
+  const [sharingLoading, setSharingLoading] = useState(true)
+  const [sharingSaving, setSharingSaving] = useState(false)
+  const [sharingConfirmed, setSharingConfirmed] = useState(false)
+  const [sharingMessage, setSharingMessage] = useState<string | null>(null)
+  const [sharingError, setSharingError] = useState<string | null>(null)
+
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -69,6 +76,12 @@ export default function Settings() {
         )
       })
       .finally(() => setAdvisorLoading(false))
+
+    api
+      .get<{ sharing: PolicySharingStatus }>('/api/policy-sharing')
+      .then((data) => setSharing(data.sharing))
+      .catch((err) => setSharingError(err instanceof ApiError ? err.message : '共有設定を読み込めませんでした。'))
+      .finally(() => setSharingLoading(false))
   }, [])
 
   const handleProfileSubmit = async (e: FormEvent) => {
@@ -120,6 +133,25 @@ export default function Settings() {
     }
   }
 
+  const handleSharingUpdate = async (enabled: boolean) => {
+    if (sharingSaving) return
+    setSharingSaving(true)
+    setSharingMessage(null)
+    setSharingError(null)
+    try {
+      const data = await api.put<{ sharing: PolicySharingStatus }>('/api/policy-sharing',
+        enabled ? { enabled: true, confirmation: sharingConfirmed } : { enabled: false },
+      )
+      setSharing(data.sharing)
+      setSharingConfirmed(false)
+      setSharingMessage(enabled ? '担当代理店への全件共有を許可しました。' : '共有を解除しました。')
+    } catch (err) {
+      setSharingError(err instanceof ApiError ? err.message : '共有設定を変更できませんでした。')
+    } finally {
+      setSharingSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -149,7 +181,7 @@ export default function Settings() {
           担当FPの連絡先
         </h2>
         <p className="text-xs text-ink-muted">
-          担当のファイナンシャルプランナーの連絡先です。このアプリへのログイン権限は担当者には付与されません。
+          担当のファイナンシャルプランナーの連絡先です。下の「保険情報の共有」で許可しない限り、担当者に保険内容は表示されません。
         </p>
         {advisorLoading || !advisor ? (
           <p className="text-sm text-ink-muted">読み込み中…</p>
@@ -227,6 +259,68 @@ export default function Settings() {
             </button>
           </form>
         )}
+      </div>
+
+      <div className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
+          <ShieldCheck size={16} />
+          保険情報の共有
+        </h2>
+        <p className="text-xs leading-relaxed text-ink-muted">
+          信頼できる担当代理店に、登録中のすべての保険情報を閲覧専用で共有できます。担当者は内容を変更・削除できません。
+        </p>
+
+        {sharingLoading ? (
+          <p className="text-sm text-ink-muted">読み込み中…</p>
+        ) : !managedByAdvisorAccount || !sharing?.available ? (
+          <div className="rounded-xl bg-plane px-4 py-3 text-sm text-ink-secondary">
+            代理店から招待され、担当者と紐づくと共有設定を利用できます。
+          </div>
+        ) : sharing.enabled ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
+              <p className="text-sm font-bold text-brand-800">全保険情報を共有中です</p>
+              <p className="mt-1 text-xs leading-relaxed text-brand-700">
+                証券番号、保険料、保障内容、特約、受取人、メモを含む登録情報を、現在の担当者が閲覧できます。
+                {sharing.grantedAt && ` 許可日: ${new Date(sharing.grantedAt).toLocaleDateString('ja-JP')}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleSharingUpdate(false)}
+              disabled={sharingSaving}
+              className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {sharingSaving ? '変更しています…' : '共有を解除する'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="rounded-xl bg-plane px-4 py-3 text-xs leading-relaxed text-ink-secondary">
+              共有を許可すると、現在登録している情報だけでなく、今後追加・更新する保険情報も担当者から閲覧可能になります。共有はいつでも解除できます。
+            </div>
+            <label className="flex items-start gap-2.5 text-sm text-ink-secondary">
+              <input
+                type="checkbox"
+                checked={sharingConfirmed}
+                onChange={(e) => setSharingConfirmed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-line text-brand-700 focus:ring-brand-400"
+              />
+              <span>共有される情報と閲覧範囲を確認し、現在の担当代理店への全件共有に同意します。</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => void handleSharingUpdate(true)}
+              disabled={sharingSaving || !sharingConfirmed}
+              className="rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {sharingSaving ? '保存しています…' : '全保険情報の共有を許可する'}
+            </button>
+          </div>
+        )}
+
+        {sharingMessage && <p className="text-xs font-semibold text-brand-700">{sharingMessage}</p>}
+        {sharingError && <p className="text-xs font-semibold text-red-600">{sharingError}</p>}
       </div>
 
       <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">

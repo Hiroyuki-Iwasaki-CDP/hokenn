@@ -20,6 +20,7 @@ const ORIGIN = process.env.ALLOWED_ORIGIN ?? BASE_URL
 const RUN_ID = Date.now().toString(36)
 const EMAIL_A = `security-check-a-${RUN_ID}@example.com`
 const EMAIL_B = `security-check-b-${RUN_ID}@example.com`
+const EMAIL_ADVISOR = `security-check-advisor-${RUN_ID}@example.com`
 const EMAIL_RATE = `security-check-rate-${RUN_ID}@example.com`
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
@@ -114,6 +115,7 @@ async function main() {
   console.log('準備: テスト用アカウントA・Bを作成しログイン…')
   const cookieA = await createTestUserAndCookie(EMAIL_A)
   const cookieB = await createTestUserAndCookie(EMAIL_B)
+  const cookieAdvisor = await createTestUserAndCookie(EMAIL_ADVISOR)
   const policyIdA = await createPolicy(cookieA, 'テストA本人')
   const policyIdB = await createPolicy(cookieB, 'テストB本人')
   console.log('準備完了。\n')
@@ -190,6 +192,53 @@ async function main() {
     assert(advisor.phone === '0120-000-000', '設定した電話番号はそのまま返る')
     assert(advisor.email === null, '未設定のメールはnullのまま返る(フロントは非表示にする)')
     assert(advisor.officialLineUrl === null, '未設定の公式LINEはnullのまま返る(フロントは非表示にする)')
+  }
+
+  console.log('3.6 契約者の明示的な共有許可・解除と、担当者の閲覧専用権限')
+  {
+    const advisorUserId = createdUserIds[2]
+    const customerUserId = createdUserIds[0]
+    const { error: roleError } = await admin.from('users').update({ role: 'advisor' }).eq('id', advisorUserId)
+    if (roleError) throw new Error(`advisor role setup failed: ${roleError.message}`)
+    const { error: linkError } = await admin.from('users').update({ advisor_id: advisorUserId }).eq('id', customerUserId)
+    if (linkError) throw new Error(`advisor link setup failed: ${linkError.message}`)
+
+    const beforeGrant = await authedFetch(cookieAdvisor, `/api/advisor/clients/${customerUserId}/policies`)
+    assert(beforeGrant.status === 403, '共有許可前は担当者でも顧客の保険を閲覧できない')
+
+    const grant = await authedFetch(cookieA, '/api/policy-sharing', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: true, confirmation: true }),
+    })
+    assert(grant.ok, '契約者本人は現在の担当者へ全件共有を許可できる')
+
+    const shared = await authedFetch(cookieAdvisor, `/api/advisor/clients/${customerUserId}/policies`)
+    const sharedBody = await shared.json()
+    assert(shared.ok && sharedBody.policies.some((p) => p.id === policyIdA), '共有後は担当者が顧客の保険を閲覧できる')
+    assert(!sharedBody.policies.some((p) => p.id === policyIdB), '共有後も他の顧客の保険は混入しない')
+
+    const advisorUpdate = await authedFetch(cookieAdvisor, `/api/policies/${policyIdA}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        insuredPersonName: '改ざん',
+        category: 'medical',
+        insuranceCompany: '改ざん',
+        productName: '改ざん',
+        premiumAmount: 0,
+        premiumFrequency: 'monthly',
+        status: 'active',
+      }),
+    })
+    assert(advisorUpdate.status === 404, '共有中でも担当者は顧客の保険を更新できない')
+
+    const revoke = await authedFetch(cookieA, '/api/policy-sharing', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled: false }),
+    })
+    assert(revoke.ok, '契約者本人は共有を解除できる')
+
+    const afterRevoke = await authedFetch(cookieAdvisor, `/api/advisor/clients/${customerUserId}/policies`)
+    assert(afterRevoke.status === 403, '共有解除後は担当者が直ちに閲覧できなくなる')
   }
 
   console.log('4. 認証コードは再利用できない')
