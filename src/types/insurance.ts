@@ -149,4 +149,13 @@ export interface AdvisorClient {
   displayName: string | null
   onboarded: boolean
   invitedAt: string
+  policySharingEnabled: boolean
+  policySharingGrantedAt: string | null
+}
+
+export interface PolicySharingStatus {
+  available: boolean
+  enabled: boolean
+  scope: 'full' | null
+  grantedAt: string | null
 }

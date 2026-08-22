@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck, Users } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
 import BetaBadge from '../common/BetaBadge'
@@ -29,10 +29,18 @@ export default function AdvisorLayout() {
         </p>
 
         <nav className="flex flex-col gap-1">
-          <span className="flex items-center gap-3 rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-medium text-brand-900">
+          <NavLink
+            to="/advisor"
+            end
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                isActive ? 'bg-brand-50 text-brand-900' : 'text-brand-100 hover:bg-white/10 hover:text-white'
+              }`
+            }
+          >
             <Users size={18} strokeWidth={2.25} />
             顧客一覧・自分のプロフィール
-          </span>
+          </NavLink>
         </nav>
 
         <div className="mt-auto pt-6">

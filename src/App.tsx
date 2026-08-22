@@ -10,6 +10,7 @@ import VerifyCode from './pages/VerifyCode'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import AdvisorDashboard from './pages/AdvisorDashboard'
+import AdvisorClientPolicies from './pages/AdvisorClientPolicies'
 import DemoDashboard from './pages/DemoDashboard'
 import PolicyList from './pages/PolicyList'
 import PolicyDetail from './pages/PolicyDetail'
@@ -39,6 +40,7 @@ export default function App() {
           <Route element={<RequireAdvisor />}>
             <Route element={<AdvisorLayout />}>
               <Route path="/advisor" element={<AdvisorDashboard />} />
+              <Route path="/advisor/clients/:id" element={<AdvisorClientPolicies />} />
             </Route>
           </Route>
 

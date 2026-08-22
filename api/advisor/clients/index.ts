@@ -7,7 +7,8 @@ import { writeAuditLog } from '../../_lib/audit.js'
 
 /**
  * FP専用: 自分が招待した顧客の一覧・招待。
- * 顧客の保険データ(insurance_policies等)には一切アクセスしない。氏名・メール・登録状況のみ扱う。
+ * 一覧では氏名・メール・登録状況と、契約者本人が保険情報の全件共有を許可しているかだけを扱う。
+ * 実際の保険情報は共有許可を再確認する専用の読み取りAPIからのみ取得する。
  */
 async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireAdvisorSession(req, res)
@@ -23,6 +24,18 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
 
+    const { data: consents, error: consentError } = await session.supabase
+      .from('policy_sharing_consents')
+      .select('customer_user_id, granted_at')
+      .eq('advisor_user_id', session.userId)
+      .eq('scope', 'full')
+      .is('revoked_at', null)
+    if (consentError) throw new HttpError(500, 'サーバーエラーが発生しました。')
+
+    const consentByCustomer = new Map(
+      (consents ?? []).map((consent) => [consent.customer_user_id, consent.granted_at] as const),
+    )
+
     sendJson(res, 200, {
       clients: (data ?? []).map((row) => ({
         id: row.id,
@@ -30,6 +43,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         displayName: row.display_name,
         onboarded: !!row.terms_accepted_at,
         invitedAt: row.created_at,
+        policySharingEnabled: consentByCustomer.has(row.id),
+        policySharingGrantedAt: consentByCustomer.get(row.id) ?? null,
       })),
     })
     return
