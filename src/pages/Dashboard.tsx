@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ListChecks, Wallet, CalendarDays, ArrowRight } from 'lucide-react'
+import { ListChecks, Wallet, CalendarDays, ArrowRight, CircleDollarSign } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
 import { useAuth } from '../store/AuthContext'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
@@ -11,8 +11,8 @@ import StatCard from '../components/common/StatCard'
 import PolicyCard from '../components/policy/PolicyCard'
 import EmptyState from '../components/common/EmptyState'
 import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
-import { sumAnnualPremium, sumMonthlyPremiumInYen, sortByUpcoming } from '../lib/calculations'
-import { formatDate, formatYen } from '../lib/format'
+import { sumAnnualPremium, sumMonthlyPremiumInYen, sortByUpcoming, toAnnualPremium, toMonthlyPremium } from '../lib/calculations'
+import { formatDate, formatUsd, formatYen } from '../lib/format'
 import type { CategoryId } from '../types/insurance'
 import { useExchangeRate } from '../store/ExchangeRateContext'
 import ExchangeRateNote from '../components/common/ExchangeRateNote'
@@ -31,9 +31,18 @@ export default function Dashboard() {
   )
 
   const activePolicies = useMemo(() => filtered.filter((p) => p.status === 'active'), [filtered])
+  const dollarPolicies = useMemo(() => activePolicies.filter((policy) => policy.currency === 'USD'), [activePolicies])
 
   const monthlyTotal = useMemo(() => sumMonthlyPremiumInYen(activePolicies, usdJpy), [activePolicies, usdJpy])
   const annualTotal = useMemo(() => sumAnnualPremium(activePolicies, usdJpy), [activePolicies, usdJpy])
+  const monthlyDollarTotal = useMemo(
+    () => dollarPolicies.reduce((sum, policy) => sum + toMonthlyPremium(policy), 0),
+    [dollarPolicies],
+  )
+  const annualDollarTotal = useMemo(
+    () => dollarPolicies.reduce((sum, policy) => sum + toAnnualPremium(policy), 0),
+    [dollarPolicies],
+  )
   const upcoming = useMemo(() => sortByUpcoming(activePolicies), [activePolicies])
   const nextUpcoming = upcoming.find((u) => u.days >= 0) ?? upcoming[0]
 
@@ -63,6 +72,8 @@ export default function Dashboard() {
 
       <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
 
+      <ExchangeRateNote />
+
       {policies.length === 0 ? (
         <EmptyState
           title="まだ保険が登録されていません"
@@ -78,7 +89,7 @@ export default function Dashboard() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${dollarPolicies.length > 0 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
             <StatCard
               label="加入中の保険"
               value={activePolicies.length}
@@ -93,6 +104,14 @@ export default function Dashboard() {
               sub={`年間約 ${formatYen(Math.round(annualTotal))}`}
               icon={<Wallet size={20} />}
             />
+            {dollarPolicies.length > 0 && (
+              <StatCard
+                label="ドル建て保険料"
+                value={formatUsd(monthlyDollarTotal)}
+                sub={`年間 ${formatUsd(annualDollarTotal)}${usdJpy === null ? '' : `・月額約 ${formatYen(monthlyDollarTotal * usdJpy)}`}`}
+                icon={<CircleDollarSign size={20} />}
+              />
+            )}
             <StatCard
               label="次の更新"
               value={nextUpcoming ? formatDate(nextUpcoming.date).replace('日', '') : '—'}
@@ -107,7 +126,6 @@ export default function Dashboard() {
               icon={<CalendarDays size={20} />}
             />
           </div>
-          {activePolicies.some((policy) => policy.currency === 'USD') && <ExchangeRateNote />}
 
           <CoverageMap registeredCategories={registeredCategories} />
 
