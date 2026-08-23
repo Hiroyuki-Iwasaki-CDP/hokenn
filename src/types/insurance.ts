@@ -161,6 +161,21 @@ export interface AdvisorConsultation {
   requestedAt: string
 }
 
+export type ProductCategory = 'life' | 'medical' | 'auto' | 'home' | 'accident' | 'business'
+
+export interface InsuranceProduct {
+  id: string
+  category: ProductCategory
+  insurerName: string
+  productName: string
+  summary: string
+  officialUrl: string | null
+  isPublished: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface PolicySharingStatus {
   available: boolean
   enabled: boolean
