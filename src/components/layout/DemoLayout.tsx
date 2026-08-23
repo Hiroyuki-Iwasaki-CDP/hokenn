@@ -2,7 +2,7 @@ import { Link, Outlet } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 import DemoSidebar from './DemoSidebar'
 import MobileHeader from './MobileHeader'
-import BetaNotice from '../common/BetaNotice'
+import SensitiveInfoNotice from '../common/SensitiveInfoNotice'
 
 export default function DemoLayout() {
   return (
@@ -12,7 +12,7 @@ export default function DemoLayout() {
         <MobileHeader />
         <main className="flex-1 px-4 pt-6 pb-24 sm:px-6 md:px-10 md:pt-8 md:pb-10">
           <div className="mx-auto max-w-6xl space-y-4">
-            <BetaNotice />
+            <SensitiveInfoNotice />
             <Outlet />
           </div>
         </main>

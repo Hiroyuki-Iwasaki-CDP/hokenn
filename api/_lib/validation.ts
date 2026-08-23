@@ -43,6 +43,16 @@ export const inviteClientSchema = z.object({
   email: emailSchema,
 })
 
+export const policySharingUpdateSchema = z.discriminatedUnion('enabled', [
+  z.object({
+    enabled: z.literal(true),
+    confirmation: z.literal(true, { message: '共有内容を確認して同意してください。' }),
+  }),
+  z.object({
+    enabled: z.literal(false),
+  }),
+])
+
 const optionalAmount = z
   .number()
   .finite()

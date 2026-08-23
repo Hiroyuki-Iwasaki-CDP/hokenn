@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { LayoutGrid, ListChecks, Scale, ShieldCheck, LogIn } from 'lucide-react'
-import BetaBadge from '../common/BetaBadge'
 
 const NAV_ITEMS = [
   { label: 'ホーム', icon: LayoutGrid },
@@ -17,7 +16,6 @@ export default function DemoSidebar() {
           <ShieldCheck size={18} strokeWidth={2.25} />
         </span>
         <span className="text-[15px] font-bold text-white">わが家の保険</span>
-        <BetaBadge />
       </div>
 
       <nav className="flex flex-col gap-1">

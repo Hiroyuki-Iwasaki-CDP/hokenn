@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { methodNotAllowed, sendJson, withErrorHandling } from '../_lib/http.js'
-import { getSessionUser } from '../_lib/session.js'
+import { methodNotAllowed, sendJson, withErrorHandling } from '../../_lib/http.js'
+import { getSessionUser } from '../../_lib/session.js'
+import { CURRENT_LEGAL_VERSION } from '../../_lib/legal.js'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET'])
@@ -13,13 +14,16 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: userRow } = await session.supabase
     .from('users')
-    .select('display_name, manage_scope, terms_accepted_at, role, advisor_id')
+    .select('display_name, manage_scope, terms_accepted_at, terms_version, privacy_version, role, advisor_id')
     .eq('id', session.userId)
     .maybeSingle()
 
   sendJson(res, 200, {
     authenticated: true,
-    needsOnboarding: !userRow?.terms_accepted_at,
+    needsOnboarding:
+      !userRow?.terms_accepted_at ||
+      userRow.terms_version !== CURRENT_LEGAL_VERSION ||
+      userRow.privacy_version !== CURRENT_LEGAL_VERSION,
     user: {
       id: session.userId,
       email: session.email,

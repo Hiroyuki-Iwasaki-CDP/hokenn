@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createSupabaseServerClient } from '../_lib/supabaseServer.js'
-import { assertTrustedOrigin, clientIp, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
-import { requestCodeSchema } from '../_lib/validation.js'
-import { assertWithinRateLimit, recordRateLimitEvent, REQUEST_CODE_EMAIL_RULES, REQUEST_CODE_IP_RULES } from '../_lib/rateLimit.js'
+import { createSupabaseServerClient } from '../../_lib/supabaseServer.js'
+import { assertTrustedOrigin, clientIp, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../_lib/http.js'
+import { requestCodeSchema } from '../../_lib/validation.js'
+import { assertWithinRateLimit, recordRateLimitEvent, REQUEST_CODE_EMAIL_RULES, REQUEST_CODE_IP_RULES } from '../../_lib/rateLimit.js'
 
 const GENERIC_RESPONSE = {
   ok: true,

@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
-import { requireSessionUser } from '../_lib/session.js'
-import { advisorProfileSchema } from '../_lib/validation.js'
-import { advisorInputToRow, advisorRowToApi, type AdvisorRow } from '../_lib/mappers.js'
-import { writeAuditLog } from '../_lib/audit.js'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../_lib/http.js'
+import { requireSessionUser } from '../../_lib/session.js'
+import { advisorProfileSchema } from '../../_lib/validation.js'
+import { advisorInputToRow, advisorRowToApi, type AdvisorRow } from '../../_lib/mappers.js'
+import { writeAuditLog } from '../../_lib/audit.js'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireSessionUser(req, res)

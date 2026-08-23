@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutGrid, ListChecks, Scale, ShieldCheck, Plus, Settings as SettingsIcon, LogOut } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
 import AdvisorCard from './AdvisorCard'
-import BetaBadge from '../common/BetaBadge'
 
 const NAV_ITEMS = [
   { to: '/', label: 'ホーム', icon: LayoutGrid, end: true },
@@ -26,7 +25,6 @@ export default function Sidebar() {
           <ShieldCheck size={18} strokeWidth={2.25} />
         </span>
         <span className="text-[15px] font-bold text-white">わが家の保険</span>
-        <BetaBadge />
       </div>
 
       <nav className="flex flex-col gap-1">
