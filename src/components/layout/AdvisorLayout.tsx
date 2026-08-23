@@ -76,6 +76,31 @@ export default function AdvisorLayout() {
             ログアウト
           </button>
         </header>
+        <nav className="grid grid-cols-2 border-b border-line bg-white md:hidden">
+          <NavLink
+            to="/advisor"
+            end
+            className={({ isActive }) =>
+              `flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold ${
+                isActive ? 'border-b-2 border-brand-700 text-brand-800' : 'text-ink-muted'
+              }`
+            }
+          >
+            <Users size={15} />
+            顧客・相談
+          </NavLink>
+          <NavLink
+            to="/advisor/products"
+            className={({ isActive }) =>
+              `flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold ${
+                isActive ? 'border-b-2 border-brand-700 text-brand-800' : 'text-ink-muted'
+              }`
+            }
+          >
+            <BriefcaseBusiness size={15} />
+            取扱商品
+          </NavLink>
+        </nav>
         <main className="flex-1 px-4 pt-6 pb-10 sm:px-6 md:px-10 md:pt-8">
           <div className="mx-auto max-w-3xl">
             <Outlet />
