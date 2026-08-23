@@ -286,7 +286,7 @@ max_frequency = "5s"
 # 4152127777 = "123456"
 
 # Configure logged in session timeouts.
-# [auth.sessions] timebox はSupabase Pro プラン以上でのみ設定可能なため、無料プランのβ版では
+# [auth.sessions] timebox はSupabase Pro プラン以上でのみ設定可能なため、無料プランでは
 # 未設定とする。再認証の強制はBFF側のCookie有効期限(14日、api/_lib/supabaseServer.ts)で行う。
 # [auth.sessions]
 # timebox = "336h"
