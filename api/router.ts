@@ -17,6 +17,8 @@ import policies from './_handlers/policies/index.js'
 import policySharing from './_handlers/policy-sharing.js'
 import profile from './_handlers/profile.js'
 import productsCatalog from './_handlers/products.js'
+import exchangeRate from './_handlers/exchange-rate.js'
+import exchangeRateCron from './_handlers/cron/exchange-rate.js'
 import { sendJson } from './_lib/http.js'
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => unknown
@@ -38,6 +40,8 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/policy-sharing': policySharing,
   '/api/profile': profile,
   '/api/products': productsCatalog,
+  '/api/exchange-rate': exchangeRate,
+  '/api/cron/exchange-rate': exchangeRateCron,
 }
 
 /**

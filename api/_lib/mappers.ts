@@ -33,6 +33,8 @@ export interface PolicyRow {
   policy_number: string | null
   riders?: RiderRow[]
 
+  currency: string
+
   coverage_amount: number | null
   hospitalization_daily: number | null
   surgery_benefit: number | null
@@ -81,6 +83,8 @@ export function policyRowToApi(row: PolicyRow) {
     policyNumber: row.policy_number,
     riders: (row.riders ?? []).map(riderRowToApi),
 
+    currency: row.currency,
+
     coverageAmount: toNumberOrNull(row.coverage_amount),
     hospitalizationDaily: toNumberOrNull(row.hospitalization_daily),
     surgeryBenefit: toNumberOrNull(row.surgery_benefit),
@@ -123,6 +127,8 @@ export function policyInputToRow(input: PolicyInputPayload) {
     product_name: input.productName,
     main_contract_name: input.mainContractName?.trim() || null,
     policy_number: input.policyNumber?.trim() || null,
+
+    currency: input.currency,
 
     coverage_amount: input.coverageAmount ?? null,
     hospitalization_daily: input.hospitalizationDaily ?? null,

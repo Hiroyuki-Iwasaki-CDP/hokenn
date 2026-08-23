@@ -7,9 +7,12 @@ import EmptyState from '../components/common/EmptyState'
 import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { buildComparisonGroups } from '../lib/compare'
 import type { InsurancePolicy } from '../types/insurance'
+import { useExchangeRate } from '../store/ExchangeRateContext'
+import ExchangeRateNote from '../components/common/ExchangeRateNote'
 
 export default function Compare() {
   const { policies, loading } = useInsurance()
+  const { usdJpy } = useExchangeRate()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
 
   const persons = useMemo(() => listInsuredPersons(policies), [policies])
@@ -20,10 +23,10 @@ export default function Compare() {
     return targets
       .map((name) => {
         const memberPolicies: InsurancePolicy[] = filterPoliciesByFamily(policies, name)
-        return { name, groups: buildComparisonGroups(memberPolicies) }
+        return { name, groups: buildComparisonGroups(memberPolicies, usdJpy) }
       })
       .filter((s) => s.groups.length > 0)
-  }, [persons, policies, selectedFamily])
+  }, [persons, policies, selectedFamily, usdJpy])
 
   if (loading) return null
 
@@ -38,6 +41,7 @@ export default function Compare() {
       </div>
 
       <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
+      {policies.some((policy) => policy.currency === 'USD') && <ExchangeRateNote />}
 
       {sections.length === 0 ? (
         <EmptyState

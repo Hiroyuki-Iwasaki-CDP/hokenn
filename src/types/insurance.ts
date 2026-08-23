@@ -18,6 +18,9 @@ export type PolicyStatus = 'active' | 'lapsed' | 'cancelled' | 'matured'
 // 払込頻度
 export type PremiumFrequency = 'monthly' | 'yearly' | 'single'
 
+// 保険証券に記載された金額の通貨
+export type Currency = 'JPY' | 'USD'
+
 // 契約タイプ(更新型・終身型など)
 export type ContractType = 'renewal' | 'wholelife' | 'termFixed' | 'singlePayment'
 
@@ -47,6 +50,8 @@ export interface InsurancePolicy {
   mainContractName: string | null
   policyNumber: string | null
   riders: Rider[]
+
+  currency: Currency
 
   coverageAmount: number | null
   hospitalizationDaily: number | null
@@ -89,6 +94,8 @@ export interface PolicyInput {
   mainContractName: string
   policyNumber: string
   riders: RiderInput[]
+
+  currency: Currency
 
   coverageAmount: number | undefined
   hospitalizationDaily: number | undefined

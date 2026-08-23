@@ -21,18 +21,21 @@ import {
 import { useInsurance } from '../store/InsuranceContext'
 import { getCategory } from '../lib/categories'
 import { PREMIUM_FREQUENCY_LABEL, CONTRACT_TYPE_LABEL, STATUS_META } from '../lib/status'
-import { formatDate, formatYen, formatYenPerDay } from '../lib/format'
+import { formatDate, formatMoneyWithYen } from '../lib/format'
 import { toAnnualPremium } from '../lib/calculations'
 import CategoryIcon from '../components/common/CategoryIcon'
 import PolicyStatusBadge from '../components/common/PolicyStatusBadge'
 import EmptyState from '../components/common/EmptyState'
 import DetailSection, { Field, FieldGrid } from '../components/policy/DetailSection'
 import RiderCard from '../components/policy/RiderCard'
+import ExchangeRateNote from '../components/common/ExchangeRateNote'
+import { useExchangeRate } from '../store/ExchangeRateContext'
 
 export default function PolicyDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { getPolicy, loading, deletePolicy } = useInsurance()
+  const { usdJpy } = useExchangeRate()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -72,8 +75,7 @@ export default function PolicyDetail() {
   const fieldValueDisplay = (key: (typeof meta.fields)[number]) => {
     const value = policy[key]
     if (value === undefined || value === null) return '—'
-    if (key === 'hospitalizationDaily') return formatYenPerDay(value)
-    return formatYen(value)
+    return formatMoneyWithYen(value, policy.currency, usdJpy, key === 'hospitalizationDaily')
   }
 
   return (
@@ -148,13 +150,13 @@ export default function PolicyDetail() {
           <div className="rounded-xl bg-plane px-4 py-3 text-right">
             <p className="text-xs text-ink-muted">{meta.headlineLabel}</p>
             <p className="text-xl font-bold text-ink tabular-nums">
-              {meta.headline === 'hospitalizationDaily'
-                ? formatYenPerDay(policy[meta.headline])
-                : formatYen(policy[meta.headline])}
+              {formatMoneyWithYen(policy[meta.headline], policy.currency, usdJpy, meta.headline === 'hospitalizationDaily')}
             </p>
           </div>
         </div>
       </div>
+
+      {policy.currency === 'USD' && <ExchangeRateNote />}
 
       <DetailSection title="契約者と被保険者" icon={<Users size={17} />}>
         <FieldGrid>
@@ -183,7 +185,7 @@ export default function PolicyDetail() {
         <DetailSection title="特約" icon={<FileText size={17} />}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {policy.riders.map((rider) => (
-              <RiderCard key={rider.id} rider={rider} />
+              <RiderCard key={rider.id} rider={rider} currency={policy.currency} />
             ))}
           </div>
         </DetailSection>
@@ -199,9 +201,10 @@ export default function PolicyDetail() {
 
       <DetailSection title="保険料" icon={<Wallet size={17} />}>
         <FieldGrid>
-          <Field label="保険料" value={formatYen(policy.premiumAmount)} />
+          <Field label="通貨" value={policy.currency === 'USD' ? 'ドル建て（USD）' : '円建て（JPY）'} />
+          <Field label="保険料" value={formatMoneyWithYen(policy.premiumAmount, policy.currency, usdJpy)} />
           <Field label="支払頻度" value={PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]} />
-          <Field label="年間換算額" value={formatYen(toAnnualPremium(policy))} />
+          <Field label="年間換算額" value={formatMoneyWithYen(toAnnualPremium(policy), policy.currency, usdJpy)} />
         </FieldGrid>
       </DetailSection>
 

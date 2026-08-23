@@ -11,13 +11,16 @@ import StatCard from '../components/common/StatCard'
 import PolicyCard from '../components/policy/PolicyCard'
 import EmptyState from '../components/common/EmptyState'
 import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
-import { sumAnnualPremium, sumMonthlyPremium, sortByUpcoming } from '../lib/calculations'
+import { sumAnnualPremium, sumMonthlyPremiumInYen, sortByUpcoming } from '../lib/calculations'
 import { formatDate, formatYen } from '../lib/format'
 import type { CategoryId } from '../types/insurance'
+import { useExchangeRate } from '../store/ExchangeRateContext'
+import ExchangeRateNote from '../components/common/ExchangeRateNote'
 
 export default function Dashboard() {
   const { policies, loading } = useInsurance()
   const { user } = useAuth()
+  const { usdJpy } = useExchangeRate()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
 
   const persons = useMemo(() => listInsuredPersons(policies), [policies])
@@ -29,8 +32,8 @@ export default function Dashboard() {
 
   const activePolicies = useMemo(() => filtered.filter((p) => p.status === 'active'), [filtered])
 
-  const monthlyTotal = useMemo(() => sumMonthlyPremium(activePolicies), [activePolicies])
-  const annualTotal = useMemo(() => sumAnnualPremium(activePolicies), [activePolicies])
+  const monthlyTotal = useMemo(() => sumMonthlyPremiumInYen(activePolicies, usdJpy), [activePolicies, usdJpy])
+  const annualTotal = useMemo(() => sumAnnualPremium(activePolicies, usdJpy), [activePolicies, usdJpy])
   const upcoming = useMemo(() => sortByUpcoming(activePolicies), [activePolicies])
   const nextUpcoming = upcoming.find((u) => u.days >= 0) ?? upcoming[0]
 
@@ -104,6 +107,7 @@ export default function Dashboard() {
               icon={<CalendarDays size={20} />}
             />
           </div>
+          {activePolicies.some((policy) => policy.currency === 'USD') && <ExchangeRateNote />}
 
           <CoverageMap registeredCategories={registeredCategories} />
 

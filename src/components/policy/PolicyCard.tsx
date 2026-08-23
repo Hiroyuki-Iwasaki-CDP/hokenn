@@ -3,15 +3,16 @@ import { Pencil, ChevronRight } from 'lucide-react'
 import type { InsurancePolicy } from '../../types/insurance'
 import { getCategory } from '../../lib/categories'
 import { PREMIUM_FREQUENCY_LABEL } from '../../lib/status'
-import { formatDate, formatYen, formatYenPerDay, maskPolicyNumber } from '../../lib/format'
+import { formatDate, formatMoneyWithYen, maskPolicyNumber } from '../../lib/format'
+import { useExchangeRate } from '../../store/ExchangeRateContext'
 import CategoryIcon from '../common/CategoryIcon'
 import PolicyStatusBadge from '../common/PolicyStatusBadge'
 
 export default function PolicyCard({ policy }: { policy: InsurancePolicy }) {
+  const { usdJpy } = useExchangeRate()
   const meta = getCategory(policy.category)
   const headlineValue = policy[meta.headline]
-  const headlineText =
-    meta.headline === 'hospitalizationDaily' ? formatYenPerDay(headlineValue) : formatYen(headlineValue)
+  const headlineText = formatMoneyWithYen(headlineValue, policy.currency, usdJpy, meta.headline === 'hospitalizationDaily')
 
   const endDate = policy.maturityDate ?? policy.renewalDate
   const endLabel = policy.maturityDate ? '満期日' : policy.renewalDate ? '更新日' : null
@@ -49,7 +50,7 @@ export default function PolicyCard({ policy }: { policy: InsurancePolicy }) {
         <div>
           <p className="text-ink-muted">保険料</p>
           <p className="font-semibold text-ink tabular-nums">
-            {formatYen(policy.premiumAmount)} / {PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]}
+            {formatMoneyWithYen(policy.premiumAmount, policy.currency, usdJpy)} / {PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]}
           </p>
         </div>
         <div>

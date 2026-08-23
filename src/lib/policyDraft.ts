@@ -16,6 +16,8 @@ export function createEmptyDraft(): PolicyInput {
     policyNumber: '',
     riders: [],
 
+    currency: 'JPY',
+
     coverageAmount: undefined,
     hospitalizationDaily: undefined,
     surgeryBenefit: undefined,
@@ -61,6 +63,8 @@ export function draftFromPolicy(policy: InsurancePolicy): PolicyInput {
     mainContractName: policy.mainContractName ?? '',
     policyNumber: policy.policyNumber ?? '',
     riders: policy.riders.map(riderToInput),
+
+    currency: policy.currency,
 
     coverageAmount: policy.coverageAmount ?? undefined,
     hospitalizationDaily: policy.hospitalizationDaily ?? undefined,

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
+import { ExchangeRateProvider } from './store/ExchangeRateContext'
 import RequireAuth, { RedirectIfAuthenticated, RequireAdvisor, RequireAuthOnly } from './components/auth/RequireAuth'
 import AppLayout from './components/layout/AppLayout'
 import AdvisorLayout from './components/layout/AdvisorLayout'
@@ -27,8 +28,9 @@ import LineEntry from './pages/LineEntry'
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <ExchangeRateProvider>
+        <BrowserRouter>
+          <Routes>
           <Route element={<LegalLayout />}>
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
@@ -76,8 +78,9 @@ export default function App() {
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+        </BrowserRouter>
+      </ExchangeRateProvider>
     </AuthProvider>
   )
 }

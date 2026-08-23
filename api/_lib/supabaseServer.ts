@@ -63,6 +63,7 @@ export function createSupabaseServerClient(req: VercelRequest, res: VercelRespon
  * 「顧客本人になり替わっての操作」には絶対に使わず、以下の限定的な用途にのみ使用する:
  *   - 退会処理でのauth.usersの完全削除(supabase.auth.admin.*)
  *   - rate_limit_events の読み書き(顧客データではない運用テーブル)
+ *   - exchange_rates の日次更新と公開レートAPIでの読み取り
  *   - 検証済みLINE IDから既存ユーザーを特定し、本人用セッションを発行するLINEログイン
  * このクライアントはサーバーコードの外(ブラウザ)へは絶対に渡さない。
  */

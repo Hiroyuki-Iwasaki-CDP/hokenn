@@ -4,11 +4,13 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { getCategory } from '../lib/categories'
 import { toAnnualPremium } from '../lib/calculations'
-import { formatDate, formatYen, formatYenPerDay } from '../lib/format'
+import { formatDate, formatMoneyWithYen } from '../lib/format'
 import { CONTRACT_TYPE_LABEL, PREMIUM_FREQUENCY_LABEL, STATUS_META } from '../lib/status'
 import type { InsurancePolicy } from '../types/insurance'
 import CategoryIcon from '../components/common/CategoryIcon'
 import PolicyStatusBadge from '../components/common/PolicyStatusBadge'
+import ExchangeRateNote from '../components/common/ExchangeRateNote'
+import { useExchangeRate } from '../store/ExchangeRateContext'
 
 interface SharedPoliciesResponse {
   client: {
@@ -31,6 +33,7 @@ function Value({ label, children }: { label: string; children: ReactNode }) {
 
 function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
   const category = getCategory(policy.category)
+  const { usdJpy } = useExchangeRate()
 
   return (
     <details className="group rounded-2xl border border-line bg-white" open>
@@ -62,14 +65,15 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
           <Value label="商品名">{policy.productName}</Value>
           <Value label="主契約の内容">{policy.mainContractName ?? '—'}</Value>
           <Value label="証券番号">{policy.policyNumber ?? '—'}</Value>
-          <Value label="保障額">{formatYen(policy.coverageAmount)}</Value>
-          <Value label="入院日額">{formatYenPerDay(policy.hospitalizationDaily)}</Value>
-          <Value label="手術給付金">{formatYen(policy.surgeryBenefit)}</Value>
-          <Value label="診断給付金">{formatYen(policy.diagnosisBenefit)}</Value>
+          <Value label="通貨">{policy.currency === 'USD' ? 'ドル建て（USD）' : '円建て（JPY）'}</Value>
+          <Value label="保障額">{formatMoneyWithYen(policy.coverageAmount, policy.currency, usdJpy)}</Value>
+          <Value label="入院日額">{formatMoneyWithYen(policy.hospitalizationDaily, policy.currency, usdJpy, true)}</Value>
+          <Value label="手術給付金">{formatMoneyWithYen(policy.surgeryBenefit, policy.currency, usdJpy)}</Value>
+          <Value label="診断給付金">{formatMoneyWithYen(policy.diagnosisBenefit, policy.currency, usdJpy)}</Value>
           <Value label="保険料">
-            {formatYen(policy.premiumAmount)} / {PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]}
+            {formatMoneyWithYen(policy.premiumAmount, policy.currency, usdJpy)} / {PREMIUM_FREQUENCY_LABEL[policy.premiumFrequency]}
           </Value>
-          <Value label="年間換算額">{formatYen(toAnnualPremium(policy))}</Value>
+          <Value label="年間換算額">{formatMoneyWithYen(toAnnualPremium(policy), policy.currency, usdJpy)}</Value>
           <Value label="契約日">{formatDate(policy.contractDate)}</Value>
           <Value label="契約タイプ">
             {policy.contractType ? CONTRACT_TYPE_LABEL[policy.contractType] : '—'}
@@ -101,7 +105,7 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
                 <li key={rider.id} className="rounded-xl bg-plane px-3.5 py-3 text-sm text-ink">
                   <p className="font-semibold">{rider.name}</p>
                   <p className="mt-0.5 text-xs text-ink-muted">
-                    {rider.active ? '有効' : '無効'} ・ {formatYen(rider.amount)}
+                    {rider.active ? '有効' : '無効'} ・ {formatMoneyWithYen(rider.amount, policy.currency, usdJpy)}
                   </p>
                   {rider.note && <p className="mt-1 text-xs whitespace-pre-wrap text-ink-secondary">{rider.note}</p>}
                 </li>
@@ -135,6 +139,7 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
           </div>
         )}
       </div>
+      {policy.currency === 'USD' && <div className="px-5 pb-5 sm:px-6"><ExchangeRateNote /></div>}
     </details>
   )
 }
@@ -201,4 +206,3 @@ export default function AdvisorClientPolicies() {
     </div>
   )
 }
-

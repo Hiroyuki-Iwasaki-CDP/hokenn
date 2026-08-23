@@ -1,13 +1,15 @@
 import { Plus, Trash2 } from 'lucide-react'
-import type { RiderInput } from '../../../types/insurance'
+import type { Currency, RiderInput } from '../../../types/insurance'
 import { newRider } from '../../../lib/policyDraft'
 import { CheckboxField, NumberField, TextAreaField, TextField } from './fields'
 
 export default function RiderEditor({
   riders,
+  currency,
   onChange,
 }: {
   riders: RiderInput[]
+  currency: Currency
   onChange: (riders: RiderInput[]) => void
 }) {
   const update = (i: number, patch: Partial<RiderInput>) => {
@@ -43,7 +45,7 @@ export default function RiderEditor({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <NumberField
               label="給付額"
-              unit="円"
+              unit={currency === 'USD' ? 'ドル' : '円'}
               value={rider.amount}
               onChange={(v) => update(i, { amount: v })}
               placeholder="0"

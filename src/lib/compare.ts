@@ -15,7 +15,7 @@ export interface ComparisonGroup {
 }
 
 // 同じ被保険者・同じ保障分野の契約をまとめ、保障額を積み上げ比較できる形にする
-export function buildComparisonGroups(policies: InsurancePolicy[]): ComparisonGroup[] {
+export function buildComparisonGroups(policies: InsurancePolicy[], usdJpy: number | null): ComparisonGroup[] {
   const byCategory = new Map<CategoryId, InsurancePolicy[]>()
   for (const policy of policies) {
     if (policy.status !== 'active') continue
@@ -28,7 +28,12 @@ export function buildComparisonGroups(policies: InsurancePolicy[]): ComparisonGr
   for (const [category, list] of byCategory) {
     const meta = getCategory(category)
     const items: ComparisonItem[] = list
-      .map((policy) => ({ policy, amount: policy[meta.headline] }))
+      .map((policy) => ({
+        policy,
+        amount: typeof policy[meta.headline] === 'number'
+          ? policy[meta.headline]! * (policy.currency === 'USD' ? (usdJpy ?? 0) : 1)
+          : policy[meta.headline],
+      }))
       .filter((x): x is { policy: InsurancePolicy; amount: number } => typeof x.amount === 'number' && x.amount > 0)
     if (items.length === 0) continue
     groups.push({

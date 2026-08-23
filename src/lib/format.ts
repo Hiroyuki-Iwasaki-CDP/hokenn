@@ -8,6 +8,39 @@ export function formatYenPerDay(amount: number | undefined | null): string {
   return `${Math.round(amount).toLocaleString('ja-JP')}円/日`
 }
 
+export function formatUsd(amount: number | undefined | null): string {
+  if (amount === undefined || amount === null || Number.isNaN(amount)) return '—'
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(amount)
+}
+
+export function formatMoney(amount: number | undefined | null, currency: 'JPY' | 'USD', perDay = false): string {
+  const formatted = currency === 'USD' ? formatUsd(amount) : formatYen(amount)
+  return formatted === '—' || !perDay ? formatted : `${formatted}/日`
+}
+
+export function convertToYen(amount: number, currency: 'JPY' | 'USD', usdJpy: number | null): number | null {
+  if (currency === 'JPY') return amount
+  return usdJpy === null ? null : amount * usdJpy
+}
+
+export function formatMoneyWithYen(
+  amount: number | undefined | null,
+  currency: 'JPY' | 'USD',
+  usdJpy: number | null,
+  perDay = false,
+): string {
+  const original = formatMoney(amount, currency, perDay)
+  if (currency === 'JPY' || amount === undefined || amount === null || usdJpy === null) return original
+  const converted = formatYen(amount * usdJpy)
+  return `${original}（約${converted}${perDay ? '/日' : ''}）`
+}
+
+export function formatRateDate(iso: string | null): string {
+  if (!iso) return '取得日不明'
+  const [year, month, day] = iso.slice(0, 10).split('-')
+  return `${year}/${month}/${day}`
+}
+
 export function formatDate(iso: string | undefined | null): string {
   if (!iso) return '—'
   const d = new Date(iso)

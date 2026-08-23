@@ -17,6 +17,7 @@ const CATEGORY_IDS = [
 const POLICY_STATUSES = ['active', 'lapsed', 'cancelled', 'matured'] as const
 const PREMIUM_FREQUENCIES = ['monthly', 'yearly', 'single'] as const
 const CONTRACT_TYPES = ['renewal', 'wholelife', 'termFixed', 'singlePayment'] as const
+const CURRENCIES = ['JPY', 'USD'] as const
 
 // 空文字列も許容する(mappers.tsのpolicyInputToRowが `input.contractDate || null` で
 // 空文字列をnullへ正規化する前提のため、ここで弾くとクライアントとの契約が崩れる)。
@@ -80,6 +81,8 @@ export const policyInputSchema = z.object({
   mainContractName: z.string().trim().max(150).optional().nullable(),
   policyNumber: z.string().trim().max(50).optional().nullable(),
   riders: z.array(riderInputSchema).max(20, '特約は20件までです。').optional().default([]),
+
+  currency: z.enum(CURRENCIES),
 
   coverageAmount: optionalAmount,
   hospitalizationDaily: optionalAmount,

@@ -4,15 +4,17 @@ import { ArrowLeft, ArrowRight, Paperclip, X } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
 import { getCategory } from '../lib/categories'
 import { PREMIUM_FREQUENCY_LABEL, CONTRACT_TYPE_LABEL } from '../lib/status'
-import { formatDate, formatYen } from '../lib/format'
+import { formatDate, formatMoneyWithYen } from '../lib/format'
 import { ApiError } from '../lib/api'
 import { createEmptyDraft, draftFromPolicy } from '../lib/policyDraft'
-import type { CategoryId, ContractType, PolicyInput, PolicyStatus, PremiumFrequency } from '../types/insurance'
+import type { CategoryId, ContractType, Currency, PolicyInput, PolicyStatus, PremiumFrequency } from '../types/insurance'
 import StepIndicator from '../components/policy/form/StepIndicator'
 import CategoryPicker from '../components/policy/form/CategoryPicker'
 import RiderEditor from '../components/policy/form/RiderEditor'
 import { CheckboxField, DateField, FieldRow, NumberField, SelectField, TextAreaField, TextField } from '../components/policy/form/fields'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
+import ExchangeRateNote from '../components/common/ExchangeRateNote'
+import { useExchangeRate } from '../store/ExchangeRateContext'
 
 const STEP_LABELS = [
   '誰の保険か',
@@ -46,11 +48,17 @@ const CONTRACT_TYPE_OPTIONS: { value: ContractType; label: string }[] = [
   { value: 'singlePayment', label: '一時払い型' },
 ]
 
+const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
+  { value: 'JPY', label: '円建て（JPY）' },
+  { value: 'USD', label: 'ドル建て（USD）' },
+]
+
 export default function PolicyForm() {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
   const { getPolicy, addPolicy, updatePolicy, loading: contextLoading } = useInsurance()
+  const { usdJpy } = useExchangeRate()
 
   const existing = isEdit ? getPolicy(id) : undefined
   const [draft, setDraft] = useState<PolicyInput>(() => (existing ? draftFromPolicy(existing) : createEmptyDraft()))
@@ -218,6 +226,16 @@ export default function PolicyForm() {
 
         {step === 3 && (
           <div className="space-y-6">
+            <div className="space-y-2">
+              <SelectField
+                label="通貨"
+                required
+                value={draft.currency}
+                onChange={(v) => patch({ currency: v as Currency })}
+                options={CURRENCY_OPTIONS}
+              />
+              {draft.currency === 'USD' && <ExchangeRateNote />}
+            </div>
             <TextAreaField
               label="保障内容の要約"
               value={draft.coverageSummary}
@@ -232,7 +250,7 @@ export default function PolicyForm() {
                   <NumberField
                     key={key}
                     label={categoryMeta.fieldLabels[key] ?? key}
-                    unit={key === 'hospitalizationDaily' ? '円/日' : '円'}
+                    unit={draft.currency === 'USD' ? (key === 'hospitalizationDaily' ? 'ドル/日' : 'ドル') : (key === 'hospitalizationDaily' ? '円/日' : '円')}
                     value={draft[key]}
                     onChange={(v) => patch({ [key]: v } as Partial<PolicyInput>)}
                     placeholder="0"
@@ -242,7 +260,7 @@ export default function PolicyForm() {
             </div>
             <div>
               <p className="mb-3 text-sm font-bold text-ink">特約(任意)</p>
-              <RiderEditor riders={draft.riders} onChange={(riders) => patch({ riders })} />
+              <RiderEditor riders={draft.riders} currency={draft.currency} onChange={(riders) => patch({ riders })} />
             </div>
           </div>
         )}
@@ -253,7 +271,7 @@ export default function PolicyForm() {
               <NumberField
                 label="保険料"
                 required
-                unit="円"
+                unit={draft.currency === 'USD' ? 'ドル' : '円'}
                 value={draft.premiumAmount || undefined}
                 onChange={(v) => patch({ premiumAmount: v ?? 0 })}
                 placeholder="0"
@@ -266,6 +284,14 @@ export default function PolicyForm() {
                 options={FREQUENCY_OPTIONS}
               />
             </FieldRow>
+            {draft.currency === 'USD' && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-ink">
+                  円換算: {formatMoneyWithYen(draft.premiumAmount, draft.currency, usdJpy)}
+                </p>
+                <ExchangeRateNote />
+              </div>
+            )}
             {attemptedNext && !stepValid && (
               <p className="text-xs font-semibold text-red-600">保険料を入力してください。</p>
             )}
@@ -427,7 +453,8 @@ export default function PolicyForm() {
                 ['主契約の内容', draft.mainContractName || '未入力'],
                 ['証券番号', draft.policyNumber || '未入力'],
                 ['特約', draft.riders.length > 0 ? `${draft.riders.length}件` : '未登録'],
-                ['保険料', `${formatYen(draft.premiumAmount)} / ${PREMIUM_FREQUENCY_LABEL[draft.premiumFrequency]}`],
+                ['通貨', CURRENCY_OPTIONS.find((o) => o.value === draft.currency)?.label ?? '—'],
+                ['保険料', `${formatMoneyWithYen(draft.premiumAmount, draft.currency, usdJpy)} / ${PREMIUM_FREQUENCY_LABEL[draft.premiumFrequency]}`],
                 ['保障内容の要約', draft.coverageSummary || '未入力'],
                 ['契約日', draft.contractDate ? formatDate(draft.contractDate) : '未入力'],
                 ['契約タイプ', CONTRACT_TYPE_LABEL[draft.contractType]],

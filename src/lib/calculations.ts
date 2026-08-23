@@ -32,8 +32,12 @@ export function sumMonthlyPremium(policies: InsurancePolicy[]): number {
   return policies.reduce((sum, p) => sum + toMonthlyPremium(p), 0)
 }
 
-export function sumAnnualPremium(policies: InsurancePolicy[]): number {
-  return policies.reduce((sum, p) => sum + toAnnualPremium(p), 0)
+export function sumMonthlyPremiumInYen(policies: InsurancePolicy[], usdJpy: number | null): number {
+  return policies.reduce((sum, p) => sum + toMonthlyPremium(p) * (p.currency === 'USD' ? (usdJpy ?? 0) : 1), 0)
+}
+
+export function sumAnnualPremium(policies: InsurancePolicy[], usdJpy: number | null = null): number {
+  return policies.reduce((sum, p) => sum + toAnnualPremium(p) * (p.currency === 'USD' ? (usdJpy ?? 0) : 1), 0)
 }
 
 // 次の更新日・満期日のうち近い方を返す
