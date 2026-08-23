@@ -41,7 +41,11 @@ const exactRoutes: Record<string, ApiHandler> = {
  * 各ハンドラーの認証・認可・Origin検証は従来どおり個別ハンドラー側で強制する。
  */
 export default async function apiRouter(req: VercelRequest, res: VercelResponse) {
-  const pathname = new URL(req.url ?? '/', 'http://localhost').pathname.replace(/\/$/, '') || '/'
+  const routeParam = req.query.route
+  const route = Array.isArray(routeParam) ? routeParam.join('/') : routeParam
+  const pathname = route
+    ? `/api/${route}`.replace(/\/$/, '')
+    : new URL(req.url ?? '/', 'http://localhost').pathname.replace(/\/$/, '') || '/'
   const exactHandler = exactRoutes[pathname]
   if (exactHandler) {
     await exactHandler(req, res)
