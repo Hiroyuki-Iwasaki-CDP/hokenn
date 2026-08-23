@@ -137,6 +137,8 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 | `LINE_LOGIN_CHANNEL_ID` | LINE LoginチャネルID |
 | `LINE_LOGIN_CHANNEL_SECRET` | LINE Loginチャネルシークレット（サーバーのみで使用） |
 | `LINE_LOGIN_CALLBACK_URL` | `https://hokenn.vercel.app/api/auth/line/callback` |
+| `LINE_MESSAGING_CHANNEL_SECRET` | Messaging APIのWebhook署名検証に使用するチャネルシークレット |
+| `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` | 相談受付メッセージの返信に使用する長期チャネルアクセストークン |
 
 ローカル開発では `.env.local` にコピーして使う(`.gitignore`済み)。
 
@@ -163,6 +165,7 @@ vercel dev
 3. `main` ブランチへのpushで自動デプロイされる
 4. デプロイ後に発行されるURL(例: `https://xxxx.vercel.app`)を `ALLOWED_ORIGIN` に設定し直し、再デプロイする
 5. LINE Developers ConsoleのLINE Loginチャネルで、コールバックURLに`https://hokenn.vercel.app/api/auth/line/callback`を登録する
+6. Messaging APIチャネルのWebhook URLに`https://hokenn.vercel.app/api/webhooks/line`を登録し、検証成功後にWebhookを有効化する
 6. 同チャネルのプライバシーポリシーURLに`https://hokenn.vercel.app/privacy`、利用規約URLに`https://hokenn.vercel.app/terms`を登録する
 7. 独自ドメインは初回テストでは必須ではない
 
