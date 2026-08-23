@@ -85,6 +85,19 @@ async function consultationReply(event: LineWebhookEvent): Promise<void> {
     resource_id: customer.advisor_id ?? null,
   })
 
+  if (customer.advisor_id) {
+    await admin.from('line_consultation_requests').upsert(
+      {
+        customer_user_id: customer.id,
+        advisor_user_id: customer.advisor_id,
+        status: 'open',
+        requested_at: new Date().toISOString(),
+        resolved_at: null,
+      },
+      { onConflict: 'customer_user_id' },
+    )
+  }
+
   await reply(
     event.replyToken,
     customer.advisor_id

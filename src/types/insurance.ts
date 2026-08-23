@@ -153,6 +153,14 @@ export interface AdvisorClient {
   policySharingGrantedAt: string | null
 }
 
+export interface AdvisorConsultation {
+  id: string
+  customerId: string
+  email: string
+  displayName: string | null
+  requestedAt: string
+}
+
 export interface PolicySharingStatus {
   available: boolean
   enabled: boolean

@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, LockKeyhole, Mail, UserPlus, Users } from 'lucide-react'
+import { CheckCircle2, Eye, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
-import type { AdvisorClient, AdvisorProfile } from '../types/insurance'
+import type { AdvisorClient, AdvisorConsultation, AdvisorProfile } from '../types/insurance'
+
+const OFFICIAL_LINE_CHAT_URL = 'https://chat.line.biz/account/@615aecnm'
 
 function TextInput({
   label,
@@ -35,6 +37,10 @@ function TextInput({
 export default function AdvisorDashboard() {
   const [clients, setClients] = useState<AdvisorClient[]>([])
   const [clientsLoading, setClientsLoading] = useState(true)
+  const [consultations, setConsultations] = useState<AdvisorConsultation[]>([])
+  const [consultationsLoading, setConsultationsLoading] = useState(true)
+  const [consultationSavingId, setConsultationSavingId] = useState<string | null>(null)
+  const [consultationError, setConsultationError] = useState<string | null>(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -54,8 +60,21 @@ export default function AdvisorDashboard() {
       .finally(() => setClientsLoading(false))
   }
 
+  const loadConsultations = () => {
+    setConsultationsLoading(true)
+    setConsultationError(null)
+    api
+      .get<{ consultations: AdvisorConsultation[] }>('/api/advisor/consultations')
+      .then((data) => setConsultations(data.consultations))
+      .catch((err) =>
+        setConsultationError(err instanceof ApiError ? err.message : '相談受付を読み込めませんでした。'),
+      )
+      .finally(() => setConsultationsLoading(false))
+  }
+
   useEffect(() => {
     loadClients()
+    loadConsultations()
     api
       .get<{ advisor: AdvisorProfile | null }>('/api/advisor')
       .then((data) =>
@@ -74,6 +93,20 @@ export default function AdvisorDashboard() {
       )
       .finally(() => setAdvisorLoading(false))
   }, [])
+
+  const handleResolveConsultation = async (id: string) => {
+    if (consultationSavingId) return
+    setConsultationSavingId(id)
+    setConsultationError(null)
+    try {
+      await api.patch('/api/advisor/consultations', { id, status: 'resolved' })
+      setConsultations((current) => current.filter((consultation) => consultation.id !== id))
+    } catch (err) {
+      setConsultationError(err instanceof ApiError ? err.message : '相談受付を更新できませんでした。')
+    } finally {
+      setConsultationSavingId(null)
+    }
+  }
 
   const handleInvite = async (e: FormEvent) => {
     e.preventDefault()
@@ -120,6 +153,65 @@ export default function AdvisorDashboard() {
       </div>
 
       <SensitiveInfoNotice />
+
+      <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
+            <MessageCircle size={16} />
+            LINE相談受付
+          </h2>
+          {consultations.length > 0 && (
+            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+              未対応 {consultations.length}件
+            </span>
+          )}
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-ink-muted">
+          リッチメニューから相談を受け付けた担当顧客です。相談内容や保険情報はここには保存されません。
+        </p>
+        {consultationsLoading ? (
+          <p className="text-sm text-ink-muted">読み込み中…</p>
+        ) : consultations.length === 0 ? (
+          <p className="rounded-xl bg-plane px-4 py-3 text-sm text-ink-muted">未対応のLINE相談はありません。</p>
+        ) : (
+          <ul className="divide-y divide-line rounded-xl border border-line px-4">
+            {consultations.map((consultation) => (
+              <li key={consultation.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-ink">
+                    {consultation.displayName ?? consultation.email}
+                  </p>
+                  <p className="truncate text-xs text-ink-muted">{consultation.email}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                    受付 {new Date(consultation.requestedAt).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <a
+                    href={OFFICIAL_LINE_CHAT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-xl bg-[#06C755] px-3 py-2 text-xs font-bold text-white hover:bg-[#05b64d]"
+                  >
+                    <MessageCircle size={14} />
+                    LINEチャットを開く
+                  </a>
+                  <button
+                    type="button"
+                    disabled={consultationSavingId === consultation.id}
+                    onClick={() => handleResolveConsultation(consultation.id)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink-secondary hover:bg-plane disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={14} />
+                    {consultationSavingId === consultation.id ? '更新中…' : '対応済みにする'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {consultationError && <p className="mt-2 text-xs font-semibold text-red-600">{consultationError}</p>}
+      </section>
 
       <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">

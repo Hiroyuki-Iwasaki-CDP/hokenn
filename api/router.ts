@@ -3,6 +3,7 @@ import accountDelete from './_handlers/account/delete.js'
 import advisor from './_handlers/advisor/index.js'
 import advisorClients from './_handlers/advisor/clients/index.js'
 import advisorClientPolicies from './_handlers/advisor/clients/[id]/policies.js'
+import advisorConsultations from './_handlers/advisor/consultations.js'
 import lineCallback from './_handlers/auth/line/callback.js'
 import lineStart from './_handlers/auth/line/start.js'
 import lineStatus from './_handlers/auth/line/status.js'
@@ -23,6 +24,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/account/delete': accountDelete,
   '/api/advisor': advisor,
   '/api/advisor/clients': advisorClients,
+  '/api/advisor/consultations': advisorConsultations,
   '/api/auth/line/callback': lineCallback,
   '/api/auth/line/start': lineStart,
   '/api/auth/line/status': lineStatus,
