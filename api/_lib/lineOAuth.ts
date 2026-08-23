@@ -6,6 +6,9 @@ import { optionalEnv, requireEnv } from './env.js'
 export const LINE_STATE_COOKIE = 'hokenn-line-state'
 export const LINE_NONCE_COOKIE = 'hokenn-line-nonce'
 export const LINE_VERIFIER_COOKIE = 'hokenn-line-verifier'
+export const LINE_FLOW_COOKIE = 'hokenn-line-flow'
+
+export type LineOAuthFlow = 'link' | 'login'
 
 const OAUTH_COOKIE_PATH = '/api/auth/line'
 const OAUTH_MAX_AGE_SECONDS = 10 * 60
@@ -67,11 +70,16 @@ function cookieOptions(maxAge: number) {
   }
 }
 
-export function setLineOAuthCookies(res: VercelResponse, values: ReturnType<typeof createLineOAuthValues>) {
+export function setLineOAuthCookies(
+  res: VercelResponse,
+  values: ReturnType<typeof createLineOAuthValues>,
+  flow: LineOAuthFlow,
+) {
   appendSetCookies(res, [
     serialize(LINE_STATE_COOKIE, values.state, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
     serialize(LINE_NONCE_COOKIE, values.nonce, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
     serialize(LINE_VERIFIER_COOKIE, values.verifier, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
+    serialize(LINE_FLOW_COOKIE, flow, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
   ])
 }
 
@@ -80,6 +88,7 @@ export function clearLineOAuthCookies(res: VercelResponse) {
     serialize(LINE_STATE_COOKIE, '', cookieOptions(0)),
     serialize(LINE_NONCE_COOKIE, '', cookieOptions(0)),
     serialize(LINE_VERIFIER_COOKIE, '', cookieOptions(0)),
+    serialize(LINE_FLOW_COOKIE, '', cookieOptions(0)),
   ])
 }
 
@@ -105,6 +114,14 @@ export function safeStringEqual(a: string | undefined, b: string | undefined): b
 export function settingsRedirect(result: 'linked' | 'error', reason?: string): string {
   const origin = requireEnv('ALLOWED_ORIGIN')
   const url = new URL('/settings', origin)
+  url.searchParams.set('line', result)
+  if (reason) url.searchParams.set('reason', reason)
+  return url.toString()
+}
+
+export function lineEntryRedirect(result: 'logged_in' | 'error', reason?: string): string {
+  const origin = requireEnv('ALLOWED_ORIGIN')
+  const url = new URL('/line', origin)
   url.searchParams.set('line', result)
   if (reason) url.searchParams.set('reason', reason)
   return url.toString()

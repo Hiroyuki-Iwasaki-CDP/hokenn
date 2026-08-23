@@ -1,11 +1,25 @@
 import { Link, Navigate } from 'react-router-dom'
-import { Mail, MessageCircle, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, Mail, MessageCircle, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../store/AuthContext'
 
 const OFFICIAL_LINE_URL = 'https://line.me/R/ti/p/@615aecnm'
 
+const LINE_ERROR_MESSAGES: Record<string, string> = {
+  invalid_request: 'LINEから戻った情報を確認できませんでした。もう一度お試しください。',
+  token_exchange_failed: 'LINEの本人確認を完了できませんでした。もう一度お試しください。',
+  missing_id_token: 'LINEの本人確認情報を取得できませんでした。',
+  verification_failed: 'LINEの本人確認情報を検証できませんでした。',
+  invalid_user: 'LINEユーザーを確認できませんでした。',
+  not_linked: 'このLINEアカウントはまだ連携されていません。最初にメール認証でログインし、設定画面からLINE連携を行ってください。',
+  session_failed: 'ログイン状態を作成できませんでした。メール認証でログインしてください。',
+}
+
 export default function LineEntry() {
   const { status, user, needsOnboarding } = useAuth()
+  const search = new URLSearchParams(window.location.search)
+  const lineError = search.get('line') === 'error'
+    ? LINE_ERROR_MESSAGES[search.get('reason') ?? ''] ?? 'LINEでログインできませんでした。'
+    : null
 
   if (status === 'loading') {
     return (
@@ -32,20 +46,40 @@ export default function LineEntry() {
         <p className="mt-5 text-xs font-bold tracking-wide text-brand-700">公式LINEから開いています</p>
         <h1 className="mt-1 text-2xl font-bold text-ink">保険内容を確認</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
-          ご本人の保険情報を安全に表示するため、登録済みのメールアドレスで本人確認してください。
-          LINE連携済みでも、ログイン期限が切れた場合は再認証が必要です。
+          LINE連携済みの方は、LINE本人確認だけで安全に保険情報を表示できます。
         </p>
+
+        {lineError && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <p>{lineError}</p>
+          </div>
+        )}
+
+        <a
+          href="/api/auth/line/start?flow=login"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-3 text-sm font-bold text-white hover:bg-[#05b64d]"
+        >
+          <MessageCircle size={18} />
+          LINEでログイン
+        </a>
+
+        <div className="my-4 flex items-center gap-3 text-[11px] text-ink-muted">
+          <span className="h-px flex-1 bg-line" />
+          <span>LINE未連携の方</span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
 
         <Link
           to="/login?source=line"
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-3 text-sm font-bold text-white hover:bg-brand-800"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-700 px-4 py-3 text-sm font-bold text-brand-800 hover:bg-brand-50"
         >
           <Mail size={17} />
-          メール認証でログイン
+          メール認証で初回ログイン
         </Link>
 
         <p className="mt-4 rounded-xl bg-plane px-4 py-3 text-xs leading-relaxed text-ink-muted">
-          このアプリは招待制です。担当代理店から案内されたメールアドレスをご利用ください。
+          初回は招待されたメールアドレスでログインし、設定画面からLINE連携を行ってください。
         </p>
 
         <a

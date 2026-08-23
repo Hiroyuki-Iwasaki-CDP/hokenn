@@ -92,7 +92,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 4. LINEの検証APIでIDトークン、チャネルID、`nonce`を照合し、検証済みの`sub`だけを`users.line_user_id`へ保存する
 5. LINEアクセストークン、リフレッシュトークン、IDトークンは保存しない
 
-Messaging APIとLINE Loginを同じProviderに置いているため、将来Webhookで受け取るユーザーIDと`line_user_id`を照合できます。連携しても担当代理店への保険情報共有は自動では有効にならず、契約者が別途許可する必要があります。
+連携後は、公式LINEのリッチメニューから`/line`を開き、LINE本人確認だけで既存のSupabaseセッションを発行できます。LINE IDが未連携の場合はログインを拒否し、招待済みメールアドレスによる初回ログインへ案内します。新規ユーザー作成や担当代理店への保険情報共有は自動では行わず、共有は契約者が別途明示的に許可する必要があります。
 
 ## セキュリティ対策
 
@@ -101,7 +101,7 @@ Messaging APIとLINE Loginを同じProviderに置いているため、将来Webh
 - データ分離: アプリ層(APIが常にセッションのuserIdで絞り込み)+ DB層(Row Level Security)の二重防御。初期状態は全拒否
 - レート制限: 認証コードの送信回数・再送間隔・入力試行回数をサーバー側で制限(`rate_limit_events`テーブル)
 - CSRF対策: SameSite=Lax Cookie + 状態変更リクエストのOriginヘッダー検証
-- LINE Login: `state`・`nonce`・PKCEを使用し、LINEの検証APIでIDトークンをサーバー側検証。LINEのトークンは永続保存しない
+- LINE Login: `state`・`nonce`・PKCEを使用し、LINEの検証APIでIDトークンをサーバー側検証。連携済みIDだけ既存ユーザーのセッションを発行し、LINEのトークンは永続保存しない
 - XSS/インジェクション対策: Reactの自動エスケープ、Supabaseクライアントによるパラメータ化クエリ、zodによる入力検証、CSP等のセキュリティヘッダー(`vercel.json`)
 - ログ: 認証コード・セッション・証券番号全文・健康情報は一切ログ・監査ログに出力しない
 - 秘密情報: APIキー・service roleキーはVercelの環境変数にのみ保存し、コード・Gitには含めない。service roleキーはブラウザへ一切渡さない

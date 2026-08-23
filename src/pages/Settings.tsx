@@ -122,7 +122,7 @@ export default function Settings() {
 
   const handleLineConnect = () => {
     setLineError(null)
-    window.location.assign('/api/auth/line/start')
+    window.location.assign('/api/auth/line/start?flow=link')
   }
 
   const handleLineUnlink = async () => {

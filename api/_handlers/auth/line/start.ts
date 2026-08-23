@@ -10,11 +10,12 @@ import {
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET'])
-  await requireSessionUser(req, res)
+  const flow = req.query.flow === 'login' ? 'login' : 'link'
+  if (flow === 'link') await requireSessionUser(req, res)
 
   const config = getLineConfig()
   const values = createLineOAuthValues()
-  setLineOAuthCookies(res, values)
+  setLineOAuthCookies(res, values, flow)
   res.setHeader('Cache-Control', 'no-store')
   res.redirect(302, buildLineAuthorizeUrl(config, values))
 }
