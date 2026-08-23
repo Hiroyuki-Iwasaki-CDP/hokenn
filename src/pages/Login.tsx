@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ShieldCheck, Mail } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const openedFromLine = searchParams.get('source') === 'line'
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,6 +42,11 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-6 shadow-sm">
+          {openedFromLine && (
+            <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-xs leading-relaxed text-brand-800">
+              公式LINEから保険確認を開きました。登録済みのメールアドレスへ認証コードを送ります。
+            </div>
+          )}
           <label className="mb-1.5 block text-sm font-semibold text-ink" htmlFor="email">
             メールアドレス
           </label>

@@ -21,6 +21,7 @@ import LegalLayout from './components/layout/LegalLayout'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import Products from './pages/Products'
+import LineEntry from './pages/LineEntry'
 
 export default function App() {
   return (
@@ -42,6 +43,8 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/login/verify" element={<VerifyCode />} />
           </Route>
+
+          <Route path="/line" element={<LineEntry />} />
 
           <Route element={<RequireAuthOnly />}>
             <Route path="/onboarding" element={<Onboarding />} />
