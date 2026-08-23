@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ListChecks, Wallet, CalendarDays, ArrowRight, CircleDollarSign } from 'lucide-react'
+import { ListChecks, Wallet, CalendarDays, ArrowRight } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
 import { useAuth } from '../store/AuthContext'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
@@ -89,7 +89,7 @@ export default function Dashboard() {
         />
       ) : (
         <>
-          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${dollarPolicies.length > 0 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard
               label="加入中の保険"
               value={activePolicies.length}
@@ -101,17 +101,18 @@ export default function Dashboard() {
               label="毎月の保険料"
               value={formatYen(Math.round(monthlyTotal)).replace('円', '')}
               unit="円"
-              sub={`年間約 ${formatYen(Math.round(annualTotal))}`}
+              sub={
+                <span className="space-y-0.5">
+                  <span className="block">年間約 {formatYen(Math.round(annualTotal))}</span>
+                  {dollarPolicies.length > 0 && (
+                    <span className="block font-semibold text-brand-700">
+                      うちドル建て {formatUsd(monthlyDollarTotal)}/月・{formatUsd(annualDollarTotal)}/年
+                    </span>
+                  )}
+                </span>
+              }
               icon={<Wallet size={20} />}
             />
-            {dollarPolicies.length > 0 && (
-              <StatCard
-                label="ドル建て保険料"
-                value={formatUsd(monthlyDollarTotal)}
-                sub={`年間 ${formatUsd(annualDollarTotal)}${usdJpy === null ? '' : `・月額約 ${formatYen(monthlyDollarTotal * usdJpy)}`}`}
-                icon={<CircleDollarSign size={20} />}
-              />
-            )}
             <StatCard
               label="次の更新"
               value={nextUpcoming ? formatDate(nextUpcoming.date).replace('日', '') : '—'}
