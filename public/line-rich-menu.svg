@@ -5,7 +5,7 @@
   <rect x="1667" y="0" width="833" height="843" fill="#effcf9"/>
   <path d="M833 70V773M1667 70V773" stroke="#e5e2da" stroke-width="4"/>
 
-  <g transform="translate(306 165)" fill="none" stroke="#ffffff" stroke-width="35" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(330 155) scale(0.78)" fill="none" stroke="#ffffff" stroke-width="41" stroke-linecap="round" stroke-linejoin="round">
     <path d="M110 15 260 70v120c0 105-65 178-150 210C25 368-40 295-40 190V70Z"/>
     <path d="m35 205 55 55 125-130"/>
   </g>
