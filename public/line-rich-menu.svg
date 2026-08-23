@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="843" viewBox="0 0 2500 843">
+  <rect width="2500" height="843" fill="#f6f5f1"/>
+  <rect x="0" y="0" width="833" height="843" fill="#10635c"/>
+  <rect x="833" y="0" width="834" height="843" fill="#ffffff"/>
+  <rect x="1667" y="0" width="833" height="843" fill="#effcf9"/>
+  <path d="M833 70V773M1667 70V773" stroke="#e5e2da" stroke-width="4"/>
+
+  <g transform="translate(306 165)" fill="none" stroke="#ffffff" stroke-width="35" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M110 15 260 70v120c0 105-65 178-150 210C25 368-40 295-40 190V70Z"/>
+    <path d="m35 205 55 55 125-130"/>
+  </g>
+  <text x="416" y="610" fill="#ffffff" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="78" font-weight="700" text-anchor="middle">保険を確認</text>
+  <text x="416" y="685" fill="#c9f5ec" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="34" font-weight="600" text-anchor="middle">契約内容・保障を見る</text>
+
+  <g transform="translate(1085 165)" fill="none" stroke="#10635c" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="0" y="0" width="315" height="315" rx="45"/>
+    <path d="M0 105h315M105 0v315M210 0v315M0 210h315"/>
+  </g>
+  <text x="1250" y="610" fill="#14201d" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="78" font-weight="700" text-anchor="middle">取扱商品</text>
+  <text x="1250" y="685" fill="#52534e" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="34" font-weight="600" text-anchor="middle">保険の種類から探す</text>
+
+  <g transform="translate(1928 170)" fill="none" stroke="#10635c" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 20h300v215H125L45 310v-75H0Z"/>
+    <path d="M75 95h150M75 155h105"/>
+  </g>
+  <text x="2083" y="610" fill="#14201d" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="78" font-weight="700" text-anchor="middle">担当者に相談</text>
+  <text x="2083" y="685" fill="#10635c" font-family="Hiragino Sans, Yu Gothic, sans-serif" font-size="34" font-weight="600" text-anchor="middle">LINEで気軽に連絡</text>
+</svg>
