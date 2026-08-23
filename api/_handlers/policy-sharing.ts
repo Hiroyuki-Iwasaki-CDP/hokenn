@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from './_lib/http.js'
-import { requireSessionUser } from './_lib/session.js'
-import { policySharingUpdateSchema } from './_lib/validation.js'
-import { writeAuditLog } from './_lib/audit.js'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
+import { requireSessionUser } from '../_lib/session.js'
+import { policySharingUpdateSchema } from '../_lib/validation.js'
+import { writeAuditLog } from '../_lib/audit.js'
 
 async function getCustomerContext(
   session: Awaited<ReturnType<typeof requireSessionUser>>,
@@ -91,4 +91,3 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 export default withErrorHandling(handler)
-

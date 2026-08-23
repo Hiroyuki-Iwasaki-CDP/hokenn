@@ -1,10 +1,10 @@
-# わが家の保険(β版)
+# わが家の保険
 
 保険証券や契約内容を登録すると、誰の・何に備える・どの保険会社の・いくらの保障かを、カードや図で一目で把握できるWebアプリです。
 
-**β版**として、招待された利用者がメールアドレスの認証コードでログインし、自分専用のダッシュボードで保険情報を管理できます。利用者ごとのデータは完全に分離されています。担当FPは通常、顧客の保険情報を閲覧できませんが、契約者本人が明示的に全件共有を許可した場合だけ、担当顧客の登録情報を閲覧専用で確認できます。
+招待された利用者がメールアドレスの認証コードでログインし、自分専用のダッシュボードで保険情報を管理できます。利用者ごとのデータは完全に分離されています。担当FPは通常、顧客の保険情報を閲覧できませんが、契約者本人が明示的に全件共有を許可した場合だけ、担当顧客の登録情報を閲覧専用で確認できます。
 
-> 本サービスはテスト提供中です。保険証券画像・病歴・口座情報・クレジットカード情報などの機密情報は登録しないでください。
+> 安全のため、保険証券画像・病歴・口座情報・クレジットカード情報などの機密情報は登録しないでください。
 
 ## 特徴
 
@@ -13,6 +13,7 @@
 - 保険詳細・登録・編集: 対象者、保険会社、商品名、月額保険料、契約状態などを登録(確認画面あり)
 - 保障を比べる: 同じ対象者・同じ分野の契約の月額保険料を比較表示(中立的な事実提示のみ)
 - メールアドレスの認証コードによるログイン(招待制)
+- 既存の契約者アカウントとLINEアカウントの安全な連携（OAuth 2.1 / OpenID Connect / PKCE）
 - 左メニューに担当FPの連絡先(公式LINE・電話・メール)を表示
 - 契約者本人による担当代理店への全保険情報の共有・解除(担当者は閲覧専用)
 
@@ -46,6 +47,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - `audit_logs` — 最小限の操作ログ(認証コード・トークン・証券番号全文・健康情報は記録しない)
 - `rate_limit_events` — 認証コードの送信回数・試行回数の制限用。メールアドレス/IPはハッシュ化して記録する運用専用テーブル(顧客データではない)
 - `policy_sharing_consents` — 契約者が現在の担当FPへ全保険情報の閲覧を許可した同意記録。初期状態は未共有で、解除履歴も保持する
+- `users.line_user_id` — 同一Provider内のLINE LoginとMessaging APIで共通するLINEユーザー識別子。LINEのトークンはDBへ保存しない
 
 全テーブルでRow Level Securityを有効化し、`insurance_policies` / `advisor_profiles` は `owner_user_id = auth.uid()` の行のみ操作可能です。`owner_user_id` はクライアントの送信値を一切信用せず、常にサーバーが認証セッションから確定させます。
 
@@ -58,7 +60,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - **FPによる保険情報の閲覧**: 初期状態では閲覧不可。契約者本人が設定画面で「全保険情報の共有」を明示的に許可した場合だけ、自分の担当顧客の登録情報を閲覧専用で確認できる。編集・削除は常に不可で、契約者が共有を解除すると直ちに閲覧できなくなる
 - **FPにできないこと**: 共有された保険情報の編集・削除、共有を許可していない顧客の保険情報の閲覧、他のFPの顧客の閲覧
 - **顧客とFPの紐づけ**: FPが顧客を招待した時点で `users.advisor_id` が自動設定される。紐づいた顧客のダッシュボードには、そのFPの `advisor_profiles` が自動表示される(`GET /api/my-advisor`)。紐づきの無い顧客は従来どおり手動入力にフォールバックする
-- **FPアカウントの作成(β版は手動運用)**: セルフサインアップ画面は作らない。以下の手順で運用者(あなた)が作成する
+- **FPアカウントの作成（手動運用）**: セルフサインアップ画面は作らない。以下の手順で運用者(あなた)が作成する
   1. Supabaseダッシュボード `Authentication > Users > Send invitation` でFPのメールアドレスを招待する
   2. SQL Editorで以下を実行し、`role` を `advisor` にする(招待直後、まだ`public.users`行が無い場合は自動的に作成される)
 
@@ -82,6 +84,16 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 4. セッションは最大14日で失効し、再度メールの認証コードでのログインが必要になる
 5. ログアウトはSupabase側でリフレッシュトークンを無効化しCookieを削除する
 
+### LINE連携
+
+1. メール認証でログイン済みの契約者が、設定画面からLINE連携を開始する
+2. サーバーが`state`・`nonce`・PKCE用の値を生成し、httpOnly Cookieへ10分間だけ保存する
+3. LINE Loginの認可後、`/api/auth/line/callback`で認可コードをアクセストークン・IDトークンへ交換する
+4. LINEの検証APIでIDトークン、チャネルID、`nonce`を照合し、検証済みの`sub`だけを`users.line_user_id`へ保存する
+5. LINEアクセストークン、リフレッシュトークン、IDトークンは保存しない
+
+Messaging APIとLINE Loginを同じProviderに置いているため、将来Webhookで受け取るユーザーIDと`line_user_id`を照合できます。連携しても担当代理店への保険情報共有は自動では有効にならず、契約者が別途許可する必要があります。
+
 ## セキュリティ対策
 
 - 認証: Supabase Auth のメールOTP(独自認証をゼロから実装しない)。招待制(Supabaseダッシュボードで招待したメールアドレスのみログイン可能)
@@ -89,6 +101,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - データ分離: アプリ層(APIが常にセッションのuserIdで絞り込み)+ DB層(Row Level Security)の二重防御。初期状態は全拒否
 - レート制限: 認証コードの送信回数・再送間隔・入力試行回数をサーバー側で制限(`rate_limit_events`テーブル)
 - CSRF対策: SameSite=Lax Cookie + 状態変更リクエストのOriginヘッダー検証
+- LINE Login: `state`・`nonce`・PKCEを使用し、LINEの検証APIでIDトークンをサーバー側検証。LINEのトークンは永続保存しない
 - XSS/インジェクション対策: Reactの自動エスケープ、Supabaseクライアントによるパラメータ化クエリ、zodによる入力検証、CSP等のセキュリティヘッダー(`vercel.json`)
 - ログ: 認証コード・セッション・証券番号全文・健康情報は一切ログ・監査ログに出力しない
 - 秘密情報: APIキー・service roleキーはVercelの環境変数にのみ保存し、コード・Gitには含めない。service roleキーはブラウザへ一切渡さない
@@ -119,6 +132,11 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabaseのservice role key(サーバーのみで使用) |
 | `RATE_LIMIT_HASH_SECRET` | レート制限記録のメール/IPハッシュ化用の秘密鍵(`openssl rand -hex 32`等で生成) |
 | `ALLOWED_ORIGIN` | 本番公開URL。CSRF対策のOriginチェックに使用 |
+| `VITE_OPERATOR_NAME` | プライバシーポリシー等に表示する運営者名（公開値） |
+| `VITE_SUPPORT_EMAIL` | 公開する問い合わせメールアドレス（公開値） |
+| `LINE_LOGIN_CHANNEL_ID` | LINE LoginチャネルID |
+| `LINE_LOGIN_CHANNEL_SECRET` | LINE Loginチャネルシークレット（サーバーのみで使用） |
+| `LINE_LOGIN_CALLBACK_URL` | `https://hokenn.vercel.app/api/auth/line/callback` |
 
 ローカル開発では `.env.local` にコピーして使う(`.gitignore`済み)。
 
@@ -144,7 +162,9 @@ vercel dev
 2. Vercelプロジェクトの `Settings > Environment Variables` に上記の環境変数をすべて設定する(Production環境)
 3. `main` ブランチへのpushで自動デプロイされる
 4. デプロイ後に発行されるURL(例: `https://xxxx.vercel.app`)を `ALLOWED_ORIGIN` に設定し直し、再デプロイする
-5. 独自ドメインは初回テストでは必須ではない
+5. LINE Developers ConsoleのLINE Loginチャネルで、コールバックURLに`https://hokenn.vercel.app/api/auth/line/callback`を登録する
+6. 同チャネルのプライバシーポリシーURLに`https://hokenn.vercel.app/privacy`、利用規約URLに`https://hokenn.vercel.app/terms`を登録する
+7. 独自ドメインは初回テストでは必須ではない
 
 ### 5. テスターの招待
 
@@ -196,7 +216,7 @@ npm run lint
 
 ## 残っているリスク・既知の制約
 
-- **バックアップ**: Supabaseの無料プランには自動バックアップ/PITRが無い。β版の間はデータ量が少ないため許容しているが、本格運用前に有料プランへの切り替え、または `pg_dump` を使った定期バックアップの仕組み化を推奨する
+- **バックアップ**: Supabaseの無料プランには自動バックアップ/PITRが無い。本格運用前に有料プランへの切り替え、または `pg_dump` を使った定期バックアップの仕組み化を推奨する
 - **メール到達性**: 本番プロジェクトはカスタムSMTP(Resend)設定済み・独自の認証コードメールテンプレート(`supabase/templates/magic_link.html`)反映済みで、実際のログインを確認済み。Resendの無料枠(目安: 1日100通)を超える利用が見込まれる場合は上位プランや独自ドメイン送信の検討が必要
 - **依存パッケージの脆弱性**: `@vercel/node`(開発時のみ使用するビルドツール)が内部で依存する一部パッケージ(esbuild/undici等)に上流未修正の脆弱性が`npm audit`で報告される。いずれも本番の関数コードには含まれない開発時専用の依存であり、CIでは記録のみ行い失敗はさせていない。定期的に `npm audit` を確認すること
 - **監査ログの閲覧画面**: 未実装(`audit_logs`テーブル自体とAPI経由での記録は実装済み)

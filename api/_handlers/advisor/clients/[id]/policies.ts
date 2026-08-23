@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { HttpError, methodNotAllowed, sendJson, withErrorHandling } from '../../../_lib/http.js'
-import { requireAdvisorSession } from '../../../_lib/session.js'
-import { policyRowToApi, type PolicyRow } from '../../../_lib/mappers.js'
-import { writeAuditLog } from '../../../_lib/audit.js'
+import { HttpError, methodNotAllowed, sendJson, withErrorHandling } from '../../../../_lib/http.js'
+import { requireAdvisorSession } from '../../../../_lib/session.js'
+import { policyRowToApi, type PolicyRow } from '../../../../_lib/mappers.js'
+import { writeAuditLog } from '../../../../_lib/audit.js'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const POLICY_SELECT = '*, riders:policy_riders(*)'
@@ -63,4 +63,3 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 export default withErrorHandling(handler)
-

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { HttpError, methodNotAllowed, sendJson, withErrorHandling } from './_lib/http.js'
-import { requireSessionUser } from './_lib/session.js'
-import { advisorRowToApi, type AdvisorRow } from './_lib/mappers.js'
+import { HttpError, methodNotAllowed, sendJson, withErrorHandling } from '../_lib/http.js'
+import { requireSessionUser } from '../_lib/session.js'
+import { advisorRowToApi, type AdvisorRow } from '../_lib/mappers.js'
 
 const ADVISOR_COLUMNS = 'advisor_name, agency_name, title, phone, email, official_line_url, contact_hours, is_accepting_inquiries'
 

@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, LockKeyhole, Mail, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
-import BetaNotice from '../components/common/BetaNotice'
+import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 import type { AdvisorClient, AdvisorProfile } from '../types/insurance'
 
 function TextInput({
@@ -119,7 +119,7 @@ export default function AdvisorDashboard() {
         </p>
       </div>
 
-      <BetaNotice />
+      <SensitiveInfoNotice />
 
       <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">

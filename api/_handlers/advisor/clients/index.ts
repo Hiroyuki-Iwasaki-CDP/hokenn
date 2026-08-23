@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../_lib/http.js'
-import { requireAdvisorSession } from '../../_lib/session.js'
-import { createSupabaseAdminClient } from '../../_lib/supabaseServer.js'
-import { inviteClientSchema } from '../../_lib/validation.js'
-import { writeAuditLog } from '../../_lib/audit.js'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../../_lib/http.js'
+import { requireAdvisorSession } from '../../../_lib/session.js'
+import { createSupabaseAdminClient } from '../../../_lib/supabaseServer.js'
+import { inviteClientSchema } from '../../../_lib/validation.js'
+import { writeAuditLog } from '../../../_lib/audit.js'
 
 /**
  * FP専用: 自分が招待した顧客の一覧・招待。

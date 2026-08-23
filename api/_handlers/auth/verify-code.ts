@@ -1,9 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createSupabaseServerClient } from '../_lib/supabaseServer.js'
-import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
-import { verifyCodeSchema } from '../_lib/validation.js'
-import { assertWithinRateLimit, recordRateLimitEvent, VERIFY_CODE_EMAIL_RULES } from '../_lib/rateLimit.js'
-import { writeAuditLog } from '../_lib/audit.js'
+import { createSupabaseServerClient } from '../../_lib/supabaseServer.js'
+import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../_lib/http.js'
+import { verifyCodeSchema } from '../../_lib/validation.js'
+import { assertWithinRateLimit, recordRateLimitEvent, VERIFY_CODE_EMAIL_RULES } from '../../_lib/rateLimit.js'
+import { writeAuditLog } from '../../_lib/audit.js'
+import { CURRENT_LEGAL_VERSION } from '../../_lib/legal.js'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])
@@ -37,7 +38,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: userRow, error: upsertError } = await supabase
     .from('users')
     .upsert({ id: userId, email }, { onConflict: 'id', ignoreDuplicates: false })
-    .select('terms_accepted_at, display_name, role, advisor_id')
+    .select('terms_accepted_at, terms_version, privacy_version, display_name, role, advisor_id')
     .single()
 
   if (upsertError) {
@@ -48,7 +49,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   sendJson(res, 200, {
     ok: true,
-    needsOnboarding: !userRow?.terms_accepted_at,
+    needsOnboarding:
+      !userRow?.terms_accepted_at ||
+      userRow.terms_version !== CURRENT_LEGAL_VERSION ||
+      userRow.privacy_version !== CURRENT_LEGAL_VERSION,
     user: {
       id: userId,
       email,

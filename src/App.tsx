@@ -17,12 +17,20 @@ import PolicyDetail from './pages/PolicyDetail'
 import PolicyForm from './pages/PolicyForm'
 import Compare from './pages/Compare'
 import Settings from './pages/Settings'
+import LegalLayout from './components/layout/LegalLayout'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route element={<LegalLayout />}>
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+          </Route>
+
           {/* ログイン不要の見た目だけのデモ画面。サンプルデータのみで、実データ・実APIには触れない。 */}
           <Route element={<DemoLayout />}>
             <Route path="/demo" element={<DemoDashboard />} />

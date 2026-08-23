@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Mail } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
-import BetaBadge from '../components/common/BetaBadge'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -35,7 +34,6 @@ export default function Login() {
           <div>
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-lg font-bold text-white">わが家の保険</h1>
-              <BetaBadge />
             </div>
             <p className="mt-1 text-sm text-brand-100">いまの保険を、ひと目で。</p>
           </div>
@@ -74,10 +72,18 @@ export default function Login() {
             <br />
             入力いただいた情報は本人確認以外の目的には使用しません。
           </p>
+          <p className="mt-3 flex justify-center gap-4 text-xs">
+            <a className="font-semibold text-brand-700 hover:underline" href="/privacy" target="_blank" rel="noreferrer">
+              プライバシーポリシー
+            </a>
+            <a className="font-semibold text-brand-700 hover:underline" href="/terms" target="_blank" rel="noreferrer">
+              利用規約
+            </a>
+          </p>
         </form>
 
         <p className="mt-4 text-center text-[11px] leading-relaxed text-brand-100">
-          β版のテスト提供です。保険証券画像・病歴・口座情報などの機密情報は登録しないでください。
+          安全のため、保険証券画像・病歴・口座情報などの機密情報は登録しないでください。
         </p>
       </div>
     </div>

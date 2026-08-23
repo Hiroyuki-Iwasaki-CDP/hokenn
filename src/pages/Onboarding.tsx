@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../store/AuthContext'
-import BetaNotice from '../components/common/BetaNotice'
+import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 import type { AuthUser, ManageScope } from '../types/insurance'
 
 export default function Onboarding() {
@@ -90,7 +90,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          <BetaNotice />
+          <SensitiveInfoNotice />
 
           <label className="flex items-start gap-2.5 text-xs text-ink-secondary">
             <input
@@ -99,7 +99,16 @@ export default function Onboarding() {
               onChange={(e) => setTermsAccepted(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-line text-brand-700 focus:ring-brand-400"
             />
-            利用規約・プライバシーポリシーに同意します。
+            <span>
+              <a className="font-semibold text-brand-700 hover:underline" href="/terms" target="_blank" rel="noreferrer">
+                利用規約
+              </a>
+              ・
+              <a className="font-semibold text-brand-700 hover:underline" href="/privacy" target="_blank" rel="noreferrer">
+                プライバシーポリシー
+              </a>
+              に同意します。
+            </span>
           </label>
 
           <label className="flex items-start gap-2.5 text-xs text-ink-secondary">
@@ -109,7 +118,7 @@ export default function Onboarding() {
               onChange={(e) => setSensitiveAck(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-line text-brand-700 focus:ring-brand-400"
             />
-            β版には保険証券画像・病歴・口座情報などの機密情報を登録しないことを理解しました。
+            保険証券画像・病歴・口座情報などの機密情報を登録しないことを理解しました。
           </label>
 
           {error && <p className="text-xs font-semibold text-red-600">{error}</p>}

@@ -12,7 +12,7 @@ import StepIndicator from '../components/policy/form/StepIndicator'
 import CategoryPicker from '../components/policy/form/CategoryPicker'
 import RiderEditor from '../components/policy/form/RiderEditor'
 import { CheckboxField, DateField, FieldRow, NumberField, SelectField, TextAreaField, TextField } from '../components/policy/form/fields'
-import BetaNotice from '../components/common/BetaNotice'
+import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 
 const STEP_LABELS = [
   '誰の保険か',
@@ -138,7 +138,7 @@ export default function PolicyForm() {
         </p>
       </div>
 
-      {!isEdit && <BetaNotice />}
+      {!isEdit && <SensitiveInfoNotice />}
 
       <StepIndicator steps={STEP_LABELS} current={step} onJump={setStep} />
 

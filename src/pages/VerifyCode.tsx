@@ -5,7 +5,6 @@ import { api, ApiError } from '../lib/api'
 import { maskEmail } from '../lib/format'
 import { useAuth } from '../store/AuthContext'
 import type { AuthUser } from '../types/insurance'
-import BetaBadge from '../components/common/BetaBadge'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -80,7 +79,6 @@ export default function VerifyCode() {
           <div>
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-lg font-bold text-white">わが家の保険</h1>
-              <BetaBadge />
             </div>
             <p className="mt-1 text-sm text-brand-100">認証コードを入力してください</p>
           </div>

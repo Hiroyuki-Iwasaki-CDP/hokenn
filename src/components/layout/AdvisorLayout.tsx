@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck, Users } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
-import BetaBadge from '../common/BetaBadge'
 import PrivacyFooter from './PrivacyFooter'
 
 export default function AdvisorLayout() {
@@ -21,7 +20,6 @@ export default function AdvisorLayout() {
             <ShieldCheck size={18} strokeWidth={2.25} />
           </span>
           <span className="text-[15px] font-bold text-white">わが家の保険</span>
-          <BetaBadge />
         </div>
 
         <p className="mb-4 rounded-xl bg-white/5 px-3 py-2.5 text-[11px] leading-relaxed text-brand-100">
@@ -62,7 +60,6 @@ export default function AdvisorLayout() {
               <ShieldCheck size={16} strokeWidth={2.25} />
             </span>
             <span className="text-sm font-bold text-ink">わが家の保険(担当者用)</span>
-            <BetaBadge />
           </div>
           <button type="button" onClick={handleLogout} className="text-xs font-semibold text-ink-secondary">
             ログアウト
