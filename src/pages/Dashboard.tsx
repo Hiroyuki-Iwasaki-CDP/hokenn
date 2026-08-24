@@ -12,15 +12,14 @@ import PolicyCard from '../components/policy/PolicyCard'
 import EmptyState from '../components/common/EmptyState'
 import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { sumAnnualPremium, sumMonthlyPremiumInYen, sortByUpcoming, toAnnualPremium, toMonthlyPremium } from '../lib/calculations'
-import { formatDate, formatUsd, formatYen } from '../lib/format'
+import { formatDate, formatRateDate, formatUsd, formatYen } from '../lib/format'
 import type { CategoryId } from '../types/insurance'
 import { useExchangeRate } from '../store/ExchangeRateContext'
-import ExchangeRateNote from '../components/common/ExchangeRateNote'
 
 export default function Dashboard() {
   const { policies, loading } = useInsurance()
   const { user } = useAuth()
-  const { usdJpy } = useExchangeRate()
+  const { usdJpy, sourceDate } = useExchangeRate()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
 
   const persons = useMemo(() => listInsuredPersons(policies), [policies])
@@ -72,8 +71,6 @@ export default function Dashboard() {
 
       <FamilyTabs persons={persons} value={selectedFamily} onChange={setSelectedFamily} />
 
-      <ExchangeRateNote />
-
       {policies.length === 0 ? (
         <EmptyState
           title="まだ保険が登録されていません"
@@ -109,6 +106,11 @@ export default function Dashboard() {
                       うちドル建て {formatUsd(monthlyDollarTotal)}/月・{formatUsd(annualDollarTotal)}/年
                     </span>
                   )}
+                  <span className="block text-[11px]">
+                    換算レート {usdJpy === null
+                      ? '取得できませんでした'
+                      : `1 USD = ${usdJpy.toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}円（${formatRateDate(sourceDate)}）`}
+                  </span>
                 </span>
               }
               icon={<Wallet size={20} />}
