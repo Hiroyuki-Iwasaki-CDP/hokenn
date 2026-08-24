@@ -290,7 +290,7 @@ export default function PolicyDetail() {
       )}
 
       {policy.attachmentNames.length > 0 && (
-        <DetailSection title="添付書類" icon={<Paperclip size={17} />}>
+        <DetailSection title="書類名メモ（ファイル本体は未保存）" icon={<Paperclip size={17} />}>
           <ul className="space-y-2">
             {policy.attachmentNames.map((name) => (
               <li key={name} className="flex items-center gap-2 rounded-xl bg-plane px-3.5 py-2.5 text-sm text-ink">

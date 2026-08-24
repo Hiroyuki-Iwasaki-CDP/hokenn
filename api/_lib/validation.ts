@@ -121,7 +121,7 @@ export const policyInputSchema = z.object({
 
   attachmentNames: z
     .array(z.string().trim().min(1).max(200))
-    .max(20, '添付は20件までです。')
+    .max(20, '書類名メモは20件までです。')
     .optional()
     .default([]),
 

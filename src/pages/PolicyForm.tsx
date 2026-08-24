@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Paperclip, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Paperclip, Plus, X } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
 import { getCategory } from '../lib/categories'
 import { PREMIUM_FREQUENCY_LABEL, CONTRACT_TYPE_LABEL } from '../lib/status'
@@ -24,7 +24,7 @@ const STEP_LABELS = [
   '保険料',
   '契約期間と更新日',
   '受取人・連絡先',
-  'メモと書類',
+  'メモと書類名',
   '確認',
 ]
 
@@ -66,6 +66,7 @@ export default function PolicyForm() {
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [attachmentName, setAttachmentName] = useState('')
 
   const patch = (p: Partial<PolicyInput>) => setDraft((d) => ({ ...d, ...p }))
   const categoryMeta = getCategory(draft.category)
@@ -391,27 +392,21 @@ export default function PolicyForm() {
             />
             <div>
               <p className="mb-1.5 text-sm font-semibold text-ink">
-                添付書類 <span className="rounded bg-plane px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">任意</span>
+                書類名メモ <span className="rounded bg-plane px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">任意</span>
               </p>
               <p className="mb-2 text-xs text-ink-muted">
-                ファイルの中身は保存されず、ファイル名のみが記録されます。証券画像などの機密情報は登録しないでください。
+                書類が手元にあることを名前だけで記録します。ファイル本体は保存されません。病名・証券番号などの機密情報は名前に含めないでください。
               </p>
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line py-3 text-sm font-semibold text-brand-700 hover:bg-brand-50/60">
-                <Paperclip size={16} />
-                ファイルを選んで追加する
+              <div className="flex gap-2">
                 <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? [])
-                    if (files.length === 0) return
-                    const names = Array.from(new Set([...draft.attachmentNames, ...files.map((f) => f.name)]))
-                    patch({ attachmentNames: names })
-                    e.target.value = ''
-                  }}
+                  value={attachmentName}
+                  maxLength={200}
+                  onChange={(event) => setAttachmentName(event.target.value)}
+                  placeholder="例：保険証券、契約内容のお知らせ"
+                  className="min-w-0 flex-1 rounded-xl border border-line bg-plane px-3.5 py-2.5 text-sm text-ink"
                 />
-              </label>
+                <button type="button" disabled={!attachmentName.trim() || draft.attachmentNames.length >= 20} onClick={() => { const name = attachmentName.trim(); if (!name) return; patch({ attachmentNames: Array.from(new Set([...draft.attachmentNames, name])) }); setAttachmentName('') }} className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-brand-200 bg-white px-3 py-2.5 text-sm font-bold text-brand-700 disabled:opacity-50"><Plus size={15} />追加</button>
+              </div>
               {draft.attachmentNames.length > 0 && (
                 <ul className="mt-3 space-y-2">
                   {draft.attachmentNames.map((name) => (
@@ -463,7 +458,7 @@ export default function PolicyForm() {
                 ['解約返戻金', draft.hasCashValue ? 'あり' : 'なし'],
                 ['受取人', draft.beneficiary || '未入力'],
                 ['担当者', draft.agentName || '未入力'],
-                ['添付書類', draft.attachmentNames.length > 0 ? `${draft.attachmentNames.length}件` : '未登録'],
+                ['書類名メモ', draft.attachmentNames.length > 0 ? `${draft.attachmentNames.length}件` : '未登録'],
                 ['メモ', draft.memo || '未入力'],
               ].map(([label, value]) => (
                 <div key={label} className="flex flex-col gap-0.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
