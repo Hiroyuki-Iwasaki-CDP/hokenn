@@ -94,14 +94,14 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
       </div>
 
       <div className="mt-5 hidden pl-1 sm:block">
-        <div className="relative h-7 border-b border-line text-[10px] text-ink-muted">
+        <div className="relative h-11 border-b border-line text-[10px] text-ink-muted">
           {yearTicks.map((year) => (
-            <span key={year} className="absolute -translate-x-1/2 tabular-nums" style={{ left: `${yearPct(year)}%` }}>
+            <span key={year} className="absolute top-0 -translate-x-1/2 tabular-nums" style={{ left: `${yearPct(year)}%` }}>
               {year}年
             </span>
           ))}
           <span
-            className="absolute bottom-1 -translate-x-1/2 rounded bg-brand-700 px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap text-white"
+            className="absolute bottom-1 -translate-x-1/2 rounded-full bg-brand-700 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-white"
             style={{ left: `${todayPct}%` }}
           >
             今日
@@ -152,7 +152,7 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
                       }}
                     />
                     <span
-                      className="absolute top-1/2 z-10 h-5 w-0.5 -translate-y-1/2 bg-brand-800"
+                      className="absolute top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-brand-800 shadow-sm"
                       style={{ left: `${todayPct}%` }}
                       aria-label="今日"
                     />
@@ -173,7 +173,7 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
       </div>
 
       <p className="mt-4 rounded-xl bg-plane px-3.5 py-2.5 text-[11px] leading-relaxed text-ink-muted">
-        濃い縦線が今日です。更新日は保障終了日ではなく、契約内容を確認する目安として表示しています。
+        棒の上の丸印が今日です。更新日は保障終了日ではなく、契約内容を確認する目安として表示しています。
       </p>
     </section>
   )
