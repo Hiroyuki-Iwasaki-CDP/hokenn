@@ -11,6 +11,7 @@ const CATEGORY_IDS = [
   'fire',
   'liability',
   'education',
+  'pension',
   'other',
 ] as const
 

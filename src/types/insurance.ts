@@ -10,6 +10,7 @@ export type CategoryId =
   | 'fire'
   | 'liability'
   | 'education'
+  | 'pension'
   | 'other'
 
 // 契約状態

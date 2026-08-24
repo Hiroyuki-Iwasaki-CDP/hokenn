@@ -158,9 +158,9 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
                     />
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between gap-3 text-[11px] tabular-nums">
-                    <span className="text-ink-muted">開始 {formatDate(policy.contractDate)}</span>
-                    <span className="flex items-center gap-1 text-right font-semibold text-ink-secondary">
+                  <div className="mt-2 flex flex-col items-start gap-1 text-[11px] tabular-nums sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <span className="whitespace-nowrap text-ink-muted">開始 {formatDate(policy.contractDate)}</span>
+                    <span className="flex items-center gap-1 font-semibold text-ink-secondary sm:text-right">
                       {endDate ? `${endKind} ${formatDate(endDate)}` : '終身（保障継続中）'}
                       <ArrowRight size={12} className="shrink-0 text-ink-muted" />
                     </span>
