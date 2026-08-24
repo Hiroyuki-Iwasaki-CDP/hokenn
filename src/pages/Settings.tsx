@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, History, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Download, History, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
+import { downloadPoliciesCsv } from '../lib/policyExport'
 import { useAuth } from '../store/AuthContext'
+import { useInsurance } from '../store/InsuranceContext'
 import type { AdvisorProfile, AuthUser, PolicySharingStatus } from '../types/insurance'
 
 function TextInput({
@@ -51,6 +53,7 @@ const LINE_ERROR_MESSAGES: Record<string, string> = {
 export default function Settings() {
   const navigate = useNavigate()
   const { user, setUser, logout } = useAuth()
+  const { policies, loading: policiesLoading } = useInsurance()
 
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [profileSaving, setProfileSaving] = useState(false)
@@ -219,6 +222,23 @@ export default function Settings() {
       </div>
 
       <Link to="/activity" className="flex items-center justify-between rounded-2xl border border-line bg-white p-5 text-sm font-bold text-ink hover:bg-plane sm:p-6"><span className="flex items-center gap-2"><History size={17} />操作履歴を確認</span><span className="text-xs font-semibold text-brand-700">最新100件</span></Link>
+
+      <div className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><Download size={16} />登録データの保存</h2>
+        <p className="text-xs leading-relaxed text-ink-muted">
+          登録している保険情報をCSV形式で端末に保存します。証券番号・受取人・メモなども含まれるため、ダウンロード後のファイルは安全な場所で管理してください。
+        </p>
+        <button
+          type="button"
+          onClick={() => downloadPoliciesCsv(policies)}
+          disabled={policiesLoading || policies.length === 0}
+          className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-bold text-brand-800 hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          {policiesLoading ? '読み込んでいます…' : policies.length === 0 ? '保存するデータがありません' : `保険情報をCSVで保存（${policies.length}件）`}
+        </button>
+        <p className="text-[11px] text-ink-muted">ファイル本体はアプリへ送信されず、この端末内にダウンロードされます。</p>
+      </div>
 
       <form onSubmit={handleProfileSubmit} className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
