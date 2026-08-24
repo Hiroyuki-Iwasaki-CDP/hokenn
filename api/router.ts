@@ -4,6 +4,7 @@ import advisor from './_handlers/advisor/index.js'
 import advisorClients from './_handlers/advisor/clients/index.js'
 import advisorClientPolicies from './_handlers/advisor/clients/[id]/policies.js'
 import advisorConsultations from './_handlers/advisor/consultations.js'
+import advisorAppointments from './_handlers/advisor/appointments.js'
 import lineCallback from './_handlers/auth/line/callback.js'
 import lineStart from './_handlers/auth/line/start.js'
 import lineStatus from './_handlers/auth/line/status.js'
@@ -18,6 +19,7 @@ import policies from './_handlers/policies/index.js'
 import policySharing from './_handlers/policy-sharing.js'
 import profile from './_handlers/profile.js'
 import productsCatalog from './_handlers/products.js'
+import consultations from './_handlers/consultations.js'
 import exchangeRate from './_handlers/exchange-rate.js'
 import exchangeRateCron from './_handlers/cron/exchange-rate.js'
 import { sendJson } from './_lib/http.js'
@@ -29,6 +31,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/advisor': advisor,
   '/api/advisor/clients': advisorClients,
   '/api/advisor/consultations': advisorConsultations,
+  '/api/advisor/appointments': advisorAppointments,
   '/api/auth/line/callback': lineCallback,
   '/api/auth/line/start': lineStart,
   '/api/auth/line/status': lineStatus,
@@ -42,6 +45,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/policy-sharing': policySharing,
   '/api/profile': profile,
   '/api/products': productsCatalog,
+  '/api/consultations': consultations,
   '/api/exchange-rate': exchangeRate,
   '/api/cron/exchange-rate': exchangeRateCron,
 }

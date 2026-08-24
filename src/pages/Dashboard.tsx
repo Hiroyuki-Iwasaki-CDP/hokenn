@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ListChecks, Wallet, CalendarDays, ArrowRight } from 'lucide-react'
+import { ListChecks, Wallet, CalendarDays, ArrowRight, ClipboardCheck } from 'lucide-react'
 import { useInsurance } from '../store/InsuranceContext'
 import { useAuth } from '../store/AuthContext'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
@@ -131,6 +131,17 @@ export default function Dashboard() {
           </div>
 
           <CoverageMap registeredCategories={registeredCategories} />
+
+          <Link
+            to="/consultation"
+            className="flex flex-col gap-3 rounded-2xl bg-brand-900 p-5 text-white shadow-sm transition-transform hover:-translate-y-0.5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+          >
+            <span className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10"><ClipboardCheck size={21} /></span>
+              <span><strong className="block text-base">保険の見える化レポート</strong><span className="mt-1 block text-xs leading-relaxed text-brand-100">登録内容の確認ポイントを整理して、担当者へ相談日時を送れます。</span></span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-bold">レポートを見る<ArrowRight size={16} /></span>
+          </Link>
 
           <CoverageTimeline policies={activePolicies} />
 

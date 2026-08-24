@@ -25,6 +25,7 @@ import TermsOfService from './pages/TermsOfService'
 import Products from './pages/Products'
 import LineEntry from './pages/LineEntry'
 import InviteConfirm from './pages/InviteConfirm'
+import ConsultationReport from './pages/ConsultationReport'
 
 export default function App() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
               <Route path="/policies/:id" element={<PolicyDetail />} />
               <Route path="/policies/:id/edit" element={<PolicyForm />} />
               <Route path="/compare" element={<Compare />} />
+              <Route path="/consultation" element={<ConsultationReport />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

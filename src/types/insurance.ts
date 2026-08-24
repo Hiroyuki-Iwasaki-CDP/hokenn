@@ -169,6 +169,28 @@ export interface AdvisorConsultation {
   requestedAt: string
 }
 
+export type ConsultationTopic = 'review' | 'renewal' | 'family' | 'premium' | 'other'
+export type ConsultationAppointmentStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled'
+
+export interface ConsultationAppointment {
+  id: string
+  topic: ConsultationTopic
+  firstChoiceAt: string
+  secondChoiceAt: string | null
+  confirmedStartAt: string | null
+  status: ConsultationAppointmentStatus
+  requestedAt: string
+  confirmedAt: string | null
+  completedAt: string | null
+  cancelledAt: string | null
+}
+
+export interface AdvisorAppointment extends ConsultationAppointment {
+  customerId: string
+  email: string
+  displayName: string | null
+}
+
 export type ProductCategory = 'life' | 'medical' | 'auto' | 'home' | 'accident' | 'business'
 
 export interface InsuranceProduct {

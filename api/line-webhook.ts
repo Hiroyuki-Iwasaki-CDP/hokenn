@@ -101,7 +101,7 @@ async function consultationReply(event: LineWebhookEvent): Promise<void> {
   await reply(
     event.replyToken,
     customer.advisor_id
-      ? '担当者へのご相談を受け付けました。担当者が順次このトークでご連絡します。\n\n安全のため、保険証券の画像・病歴・口座情報などは送信しないでください。'
+      ? `担当者へのご相談を受け付けました。担当者が順次このトークでご連絡します。\n\n相談日時の候補はこちらから送信できます。\n${new URL('/line?next=consultation', requireEnv('ALLOWED_ORIGIN')).toString()}\n\n安全のため、保険証券の画像・病歴・口座情報などは送信しないでください。`
       : 'ご相談を受け付けました。運営窓口が順次このトークでご連絡します。\n\n安全のため、保険証券の画像・病歴・口座情報などは送信しないでください。',
   )
 }

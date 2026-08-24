@@ -20,6 +20,7 @@ export default function LineEntry() {
   const lineError = search.get('line') === 'error'
     ? LINE_ERROR_MESSAGES[search.get('reason') ?? ''] ?? 'LINEでログインできませんでした。'
     : null
+  const nextPath = search.get('next') === 'consultation' ? '/consultation' : '/'
 
   if (status === 'loading') {
     return (
@@ -33,7 +34,7 @@ export default function LineEntry() {
 
   if (status === 'authenticated') {
     if (needsOnboarding) return <Navigate to="/onboarding" replace />
-    return <Navigate to={user?.role === 'advisor' ? '/advisor' : '/'} replace />
+    return <Navigate to={user?.role === 'advisor' ? '/advisor' : nextPath} replace />
   }
 
   return (
@@ -57,7 +58,7 @@ export default function LineEntry() {
         )}
 
         <a
-          href="/api/auth/line/start?flow=login"
+          href={`/api/auth/line/start?flow=login${nextPath === '/consultation' ? '&next=consultation' : ''}`}
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-3 text-sm font-bold text-white hover:bg-[#05b64d]"
         >
           <MessageCircle size={18} />

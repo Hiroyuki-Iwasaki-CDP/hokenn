@@ -1,11 +1,25 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Eye, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Eye, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
-import type { AdvisorClient, AdvisorConsultation, AdvisorProfile } from '../types/insurance'
+import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic } from '../types/insurance'
 
 const OFFICIAL_LINE_CHAT_URL = 'https://chat.line.biz/account/@615aecnm'
+
+const TOPIC_LABELS: Record<ConsultationTopic, string> = {
+  review: '保険全体の整理',
+  renewal: '更新・満期の確認',
+  family: '家族構成の変化',
+  premium: '保険料の負担確認',
+  other: 'その他の相談',
+}
+
+function formatAppointmentDate(value: string): string {
+  return new Date(value).toLocaleString('ja-JP', {
+    year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit',
+  })
+}
 
 function TextInput({
   label,
@@ -41,6 +55,10 @@ export default function AdvisorDashboard() {
   const [consultationsLoading, setConsultationsLoading] = useState(true)
   const [consultationSavingId, setConsultationSavingId] = useState<string | null>(null)
   const [consultationError, setConsultationError] = useState<string | null>(null)
+  const [appointments, setAppointments] = useState<AdvisorAppointment[]>([])
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true)
+  const [appointmentSavingId, setAppointmentSavingId] = useState<string | null>(null)
+  const [appointmentError, setAppointmentError] = useState<string | null>(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -72,9 +90,19 @@ export default function AdvisorDashboard() {
       .finally(() => setConsultationsLoading(false))
   }
 
+  const loadAppointments = () => {
+    setAppointmentsLoading(true)
+    setAppointmentError(null)
+    api.get<{ appointments: AdvisorAppointment[] }>('/api/advisor/appointments')
+      .then((data) => setAppointments(data.appointments))
+      .catch((err) => setAppointmentError(err instanceof ApiError ? err.message : '相談予約を読み込めませんでした。'))
+      .finally(() => setAppointmentsLoading(false))
+  }
+
   useEffect(() => {
     loadClients()
     loadConsultations()
+    loadAppointments()
     api
       .get<{ advisor: AdvisorProfile | null }>('/api/advisor')
       .then((data) =>
@@ -105,6 +133,24 @@ export default function AdvisorDashboard() {
       setConsultationError(err instanceof ApiError ? err.message : '相談受付を更新できませんでした。')
     } finally {
       setConsultationSavingId(null)
+    }
+  }
+
+  const updateAppointment = async (
+    id: string,
+    status: 'confirmed' | 'completed' | 'cancelled',
+    selectedChoice?: 'first' | 'second',
+  ) => {
+    if (appointmentSavingId) return
+    setAppointmentSavingId(id)
+    setAppointmentError(null)
+    try {
+      await api.patch('/api/advisor/appointments', { id, status, ...(selectedChoice ? { selectedChoice } : {}) })
+      loadAppointments()
+    } catch (err) {
+      setAppointmentError(err instanceof ApiError ? err.message : '相談予約を更新できませんでした。')
+    } finally {
+      setAppointmentSavingId(null)
     }
   }
 
@@ -153,6 +199,45 @@ export default function AdvisorDashboard() {
       </div>
 
       <SensitiveInfoNotice />
+
+      <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><CalendarClock size={16} />相談日時の申込み</h2>
+          {appointments.length > 0 && <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-800">対応中 {appointments.length}件</span>}
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-ink-muted">契約者が送信した相談テーマと日時候補です。保険の機密情報や自由記述は保存していません。</p>
+        {appointmentsLoading ? (
+          <p className="text-sm text-ink-muted">読み込み中…</p>
+        ) : appointments.length === 0 ? (
+          <p className="rounded-xl bg-plane px-4 py-3 text-sm text-ink-muted">対応中の相談予約はありません。</p>
+        ) : (
+          <ul className="divide-y divide-line rounded-xl border border-line px-4">
+            {appointments.map((appointment) => (
+              <li key={appointment.id} className="space-y-3 py-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div><p className="text-sm font-bold text-ink">{appointment.displayName ?? appointment.email}</p><p className="text-xs text-ink-muted">{appointment.email}</p></div>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${appointment.status === 'confirmed' ? 'bg-brand-50 text-brand-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status === 'confirmed' ? '日時確定' : '確認待ち'}</span>
+                </div>
+                <p className="text-xs font-semibold text-ink-secondary">相談テーマ：{TOPIC_LABELS[appointment.topic]}</p>
+                {appointment.status === 'confirmed' && appointment.confirmedStartAt ? (
+                  <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm font-bold text-brand-900">確定：{formatAppointmentDate(appointment.confirmedStartAt)}</p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'confirmed', 'first')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:opacity-50">第1希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.firstChoiceAt)}</span></button>
+                    {appointment.secondChoiceAt && <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'confirmed', 'second')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:opacity-50">第2希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.secondChoiceAt)}</span></button>}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <a href={OFFICIAL_LINE_CHAT_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-[#06C755] px-3 py-2 text-xs font-bold text-white"><MessageCircle size={14} />LINEで連絡</a>
+                  {appointment.status === 'confirmed' && <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'completed')} className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-xs font-bold text-ink-secondary disabled:opacity-50"><CheckCircle2 size={14} />相談完了</button>}
+                  <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'cancelled')} className="rounded-lg border border-line px-3 py-2 text-xs font-bold text-ink-muted disabled:opacity-50">取消</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {appointmentError && <p className="mt-2 text-xs font-semibold text-red-600">{appointmentError}</p>}
+      </section>
 
       <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

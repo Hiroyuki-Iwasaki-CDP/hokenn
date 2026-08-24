@@ -7,8 +7,10 @@ export const LINE_STATE_COOKIE = 'hokenn-line-state'
 export const LINE_NONCE_COOKIE = 'hokenn-line-nonce'
 export const LINE_VERIFIER_COOKIE = 'hokenn-line-verifier'
 export const LINE_FLOW_COOKIE = 'hokenn-line-flow'
+export const LINE_NEXT_COOKIE = 'hokenn-line-next'
 
 export type LineOAuthFlow = 'link' | 'login'
+export type LineOAuthNext = 'home' | 'consultation'
 
 const OAUTH_COOKIE_PATH = '/api/auth/line'
 const OAUTH_MAX_AGE_SECONDS = 10 * 60
@@ -74,12 +76,14 @@ export function setLineOAuthCookies(
   res: VercelResponse,
   values: ReturnType<typeof createLineOAuthValues>,
   flow: LineOAuthFlow,
+  next: LineOAuthNext = 'home',
 ) {
   appendSetCookies(res, [
     serialize(LINE_STATE_COOKIE, values.state, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
     serialize(LINE_NONCE_COOKIE, values.nonce, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
     serialize(LINE_VERIFIER_COOKIE, values.verifier, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
     serialize(LINE_FLOW_COOKIE, flow, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
+    serialize(LINE_NEXT_COOKIE, next, cookieOptions(OAUTH_MAX_AGE_SECONDS)),
   ])
 }
 
@@ -89,6 +93,7 @@ export function clearLineOAuthCookies(res: VercelResponse) {
     serialize(LINE_NONCE_COOKIE, '', cookieOptions(0)),
     serialize(LINE_VERIFIER_COOKIE, '', cookieOptions(0)),
     serialize(LINE_FLOW_COOKIE, '', cookieOptions(0)),
+    serialize(LINE_NEXT_COOKIE, '', cookieOptions(0)),
   ])
 }
 
@@ -119,10 +124,11 @@ export function settingsRedirect(result: 'linked' | 'error', reason?: string): s
   return url.toString()
 }
 
-export function lineEntryRedirect(result: 'logged_in' | 'error', reason?: string): string {
+export function lineEntryRedirect(result: 'logged_in' | 'error', reason?: string, next: LineOAuthNext = 'home'): string {
   const origin = requireEnv('ALLOWED_ORIGIN')
   const url = new URL('/line', origin)
   url.searchParams.set('line', result)
   if (reason) url.searchParams.set('reason', reason)
+  if (next !== 'home') url.searchParams.set('next', next)
   return url.toString()
 }
