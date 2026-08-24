@@ -91,9 +91,9 @@ export default function AdvisorDashboard() {
       .finally(() => setClientsLoading(false))
   }
 
-  const loadConsultations = () => {
-    setConsultationsLoading(true)
-    setConsultationError(null)
+  const loadConsultations = (silent = false) => {
+    if (!silent) setConsultationsLoading(true)
+    if (!silent) setConsultationError(null)
     api
       .get<{ consultations: AdvisorConsultation[] }>('/api/advisor/consultations')
       .then((data) => setConsultations(data.consultations))
@@ -103,9 +103,9 @@ export default function AdvisorDashboard() {
       .finally(() => setConsultationsLoading(false))
   }
 
-  const loadAppointments = () => {
-    setAppointmentsLoading(true)
-    setAppointmentError(null)
+  const loadAppointments = (silent = false) => {
+    if (!silent) setAppointmentsLoading(true)
+    if (!silent) setAppointmentError(null)
     api.get<{ appointments: AdvisorAppointment[] }>('/api/advisor/appointments')
       .then((data) => setAppointments(data.appointments))
       .catch((err) => setAppointmentError(err instanceof ApiError ? err.message : '相談予約を読み込めませんでした。'))
@@ -138,6 +138,12 @@ export default function AdvisorDashboard() {
         ),
       )
       .finally(() => setAdvisorLoading(false))
+
+    const refreshTimer = window.setInterval(() => {
+      loadConsultations(true)
+      loadAppointments(true)
+    }, 60_000)
+    return () => window.clearInterval(refreshTimer)
   }, [])
 
   const handleResolveConsultation = async (id: string) => {
@@ -237,7 +243,7 @@ export default function AdvisorDashboard() {
           <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><CalendarClock size={16} />相談日時の申込み</h2>
           {activeAppointments.length > 0 && <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-800">対応中 {activeAppointments.length}件</span>}
         </div>
-        <p className="mb-3 text-xs leading-relaxed text-ink-muted">契約者が送信した相談テーマと日時候補です。保険の機密情報や自由記述は保存していません。</p>
+        <p className="mb-3 text-xs leading-relaxed text-ink-muted">契約者が送信した相談テーマと日時候補です。保険の機密情報や自由記述は保存していません。画面は1分ごとに自動更新します。</p>
         {appointmentsLoading ? (
           <p className="text-sm text-ink-muted">読み込み中…</p>
         ) : activeAppointments.length === 0 ? (
