@@ -136,6 +136,25 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // 新規ユーザーはinviteUserByEmailが招待メールを送信済み。既存ユーザーには同じ登録リンクを
     // Magic LinkテンプレートのRedirectToとして渡す（メール内の6桁コードはログイン用の予備手段）。
     if (existing) {
+      const { data: authUser, error: authUserError } = await admin.auth.admin.getUserById(targetUserId)
+      if (authUserError || !authUser.user) {
+        await admin.from('customer_invitations').update({ revoked_at: new Date().toISOString() }).eq('id', invitation.id)
+        throw new HttpError(500, '招待先のアカウントを確認できませんでした。')
+      }
+
+      // Magic Link/OTPテンプレートを通常ログインと共用するため、この招待URLをメタデータへ保存する。
+      // テンプレート側はRedirectToとの完全一致時だけ招待案内を表示し、6桁コードを重ねて表示しない。
+      const { error: metadataError } = await admin.auth.admin.updateUserById(targetUserId, {
+        user_metadata: {
+          ...(authUser.user.user_metadata ?? {}),
+          pending_invitation_redirect: inviteUrl,
+        },
+      })
+      if (metadataError) {
+        await admin.from('customer_invitations').update({ revoked_at: new Date().toISOString() }).eq('id', invitation.id)
+        throw new HttpError(500, '招待メールを準備できませんでした。')
+      }
+
       const authClient = createSupabaseAuthClient()
       const { error: emailError } = await authClient.auth.signInWithOtp({
         email: input.email,

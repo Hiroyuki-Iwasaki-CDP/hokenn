@@ -258,7 +258,7 @@ sender_name = "わが家の保険"
 # 「6桁コードを入力する」フローと噛み合っていなかった(コードが届かないように見えていた)。
 # カスタムSMTP(Resend)設定済みのため反映する。
 [auth.email.template.magic_link]
-subject = "【わが家の保険】登録・ログインのご案内"
+subject = "{{ if and .Data.pending_invitation_redirect (eq .RedirectTo .Data.pending_invitation_redirect) }}【わが家の保険】保険代理店から招待されました{{ else }}【わが家の保険】ログイン用の認証コード{{ end }}"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.invite]

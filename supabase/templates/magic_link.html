@@ -1,22 +1,37 @@
+{{ if and .Data.pending_invitation_redirect (eq .RedirectTo .Data.pending_invitation_redirect) }}
 <div style="max-width:480px;margin:0 auto;padding:32px 24px;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#14201d;">
   <p style="font-size:13px;font-weight:bold;letter-spacing:0.05em;color:#10635c;margin:0 0 8px;">わが家の保険</p>
-  <h1 style="font-size:18px;margin:0 0 20px;">登録・ログインのご案内</h1>
-  <p style="font-size:14px;line-height:1.7;margin:0 0 20px;">
-    招待を受け取った方は、下のボタンから利用開始の登録へ進めます。
+  <h1 style="font-size:20px;margin:0 0 20px;">保険代理店から招待されました</h1>
+  <p style="font-size:14px;line-height:1.8;margin:0 0 20px;">
+    保険情報を整理し、担当代理店と安全につながるための招待です。登録は次の流れで進みます。
   </p>
+  <ol style="font-size:14px;line-height:1.8;margin:0 0 22px;padding-left:22px;">
+    <li>下のボタンから招待を確認</li>
+    <li>お名前・利用規約などを設定</li>
+    <li>保険情報を代理店へ共有するか選択</li>
+  </ol>
   <p style="margin:0 0 22px;">
-    <a href="{{ .RedirectTo }}" style="display:block;border-radius:12px;background:#10635c;padding:14px 20px;text-align:center;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">登録・ログインを続ける</a>
+    <a href="{{ .RedirectTo }}" style="display:block;border-radius:12px;background:#10635c;padding:14px 20px;text-align:center;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">登録を始める</a>
   </p>
-  <p style="font-size:13px;line-height:1.7;color:#52534e;margin:0 0 12px;">
-    通常のログインでは、ログイン画面に戻って以下の6桁コードを入力することもできます。
+  <p style="font-size:13px;line-height:1.7;color:#52534e;margin:0 0 20px;">
+    この招待リンクは7日間有効で、一度だけ利用できます。心当たりがない場合は、ボタンを押さずにこのメールを破棄してください。
+  </p>
+  <p style="font-size:12px;color:#85837c;margin:0;">
+    安全のため、保険証券画像・病歴・口座情報などの機密情報は登録しないでください。
+  </p>
+</div>
+{{ else }}
+<div style="max-width:480px;margin:0 auto;padding:32px 24px;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#14201d;">
+  <p style="font-size:13px;font-weight:bold;letter-spacing:0.05em;color:#10635c;margin:0 0 8px;">わが家の保険</p>
+  <h1 style="font-size:18px;margin:0 0 20px;">ログイン用の認証コード</h1>
+  <p style="font-size:14px;line-height:1.7;margin:0 0 20px;">
+    以下の6桁コードをログイン画面に入力してください。
   </p>
   <div style="background:#f6f5f1;border-radius:12px;padding:20px;text-align:center;margin:0 0 20px;">
     <span style="font-size:36px;font-weight:bold;letter-spacing:0.2em;color:#12413d;">{{ .Token }}</span>
   </div>
   <p style="font-size:13px;line-height:1.7;color:#52534e;margin:0 0 20px;">
-    ボタンと認証コードはいずれも一度使用すると再利用できません。心当たりのない場合は、このメールを破棄してください。
-  </p>
-  <p style="font-size:12px;color:#85837c;margin:0;">
-    安全のため、保険証券画像・病歴・口座情報などの機密情報はご登録いただかないようお願いいたします。
+    このコードは短時間で失効し、一度使用すると再利用できません。心当たりがない場合は、このメールを破棄してください。
   </p>
 </div>
+{{ end }}
