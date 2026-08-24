@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../../_lib/http.js'
 import { requireAdvisorSession } from '../../../_lib/session.js'
-import { createSupabaseAdminClient } from '../../../_lib/supabaseServer.js'
+import { createSupabaseAdminClient, createSupabaseAuthClient } from '../../../_lib/supabaseServer.js'
 import { inviteClientSchema } from '../../../_lib/validation.js'
 import { writeAuditLog } from '../../../_lib/audit.js'
 
@@ -82,6 +82,21 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (upsertError) throw new HttpError(500, 'サーバーエラーが発生しました。')
 
     await writeAuditLog(session.supabase, session.userId, 'invite_client', 'user', targetUserId)
+
+    // 顧客登録だけで終わらせず、そのままログイン用の6桁コードを送信する。
+    // Cookieを持たない専用クライアントを使い、操作中の代理店セッションは変更しない。
+    const authClient = createSupabaseAuthClient()
+    const { error: emailError } = await authClient.auth.signInWithOtp({
+      email: input.email,
+      options: { shouldCreateUser: false },
+    })
+    if (emailError) {
+      throw new HttpError(
+        502,
+        '顧客の登録は完了しましたが、招待メールを送信できませんでした。30秒以上待ってからもう一度お試しください。',
+      )
+    }
+
     sendJson(res, 201, { ok: true })
     return
   }

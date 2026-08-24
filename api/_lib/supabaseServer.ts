@@ -59,6 +59,18 @@ export function createSupabaseServerClient(req: VercelRequest, res: VercelRespon
 }
 
 /**
+ * Cookieを読み書きしない、認証メール送信専用の公開クライアント。
+ * ログイン中の代理店セッションを上書きせずにOTPを送るために使用する。
+ */
+export function createSupabaseAuthClient() {
+  const url = requireEnv('SUPABASE_URL')
+  const anonKey = requireEnv('SUPABASE_ANON_KEY')
+  return createClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+/**
  * サービスロールキーを使う管理用クライアント。RLSを完全にバイパスするため、
  * 「顧客本人になり替わっての操作」には絶対に使わず、以下の限定的な用途にのみ使用する:
  *   - 退会処理でのauth.usersの完全削除(supabase.auth.admin.*)
