@@ -65,6 +65,7 @@ export default function ConsultationReport() {
   const insights = useMemo(() => buildConsultationInsights(policies), [policies])
   const monthlyTotal = useMemo(() => sumMonthlyPremiumInYen(activePolicies, usdJpy), [activePolicies, usdJpy])
   const activeAppointment = appointments.find((item) => item.status === 'requested' || item.status === 'confirmed')
+  const pastAppointments = appointments.filter((item) => item.status === 'completed' || item.status === 'cancelled').slice(0, 10)
   const minDateTime = localDateTimeValue(new Date(Date.now() + 30 * 60 * 1000))
   const maxDateTime = localDateTimeValue(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000))
 
@@ -202,6 +203,30 @@ export default function ConsultationReport() {
         )}
         {message && <p className="mt-3 text-xs font-semibold text-brand-700">{message}</p>}
         {error && <p className="mt-3 text-xs font-semibold text-red-600">{error}</p>}
+
+        {!appointmentsLoading && pastAppointments.length > 0 && (
+          <div className="mt-6 border-t border-line pt-5">
+            <h3 className="text-sm font-bold text-ink">過去の相談履歴</h3>
+            <p className="mt-1 text-xs text-ink-muted">完了・取消した相談を最新10件まで表示します。</p>
+            <ul className="mt-3 divide-y divide-line rounded-xl bg-plane px-4">
+              {pastAppointments.map((appointment) => (
+                <li key={appointment.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-bold text-ink">{TOPIC_LABELS[appointment.topic]}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${appointment.status === 'completed' ? 'bg-brand-50 text-brand-800' : 'bg-white text-ink-muted'}`}>{appointment.status === 'completed' ? '相談完了' : '取消'}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-ink-muted">申込：{formatAppointmentDate(appointment.requestedAt)}</p>
+                    {appointment.confirmedStartAt && <p className="mt-0.5 text-[11px] font-semibold text-ink-secondary">相談日時：{formatAppointmentDate(appointment.confirmedStartAt)}</p>}
+                  </div>
+                  {appointment.status === 'completed' && appointment.confirmedStartAt && (
+                    <button type="button" onClick={() => downloadConsultationCalendar(appointment.confirmedStartAt!, '保険相談（担当者）')} className="inline-flex shrink-0 items-center justify-center gap-1 self-start rounded-lg border border-line bg-white px-3 py-2 text-xs font-bold text-ink-secondary sm:self-auto"><CalendarPlus size={14} />カレンダーに追加</button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       <p className="rounded-xl bg-plane px-4 py-3 text-xs leading-relaxed text-ink-secondary">
