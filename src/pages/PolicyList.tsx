@@ -5,20 +5,25 @@ import { useInsurance } from '../store/InsuranceContext'
 import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 import { CATEGORY_ORDER, getCategory } from '../lib/categories'
 import { STATUS_META } from '../lib/status'
+import { toMonthlyPremium } from '../lib/calculations'
 import type { PolicyStatus } from '../types/insurance'
 import PolicyCard from '../components/policy/PolicyCard'
 import FamilyTabs from '../components/dashboard/FamilyTabs'
 import EmptyState from '../components/common/EmptyState'
+import { useExchangeRate } from '../store/ExchangeRateContext'
 
 const ALL = 'all'
+type SortOrder = 'updated' | 'contract-new' | 'premium-high' | 'name'
 
 export default function PolicyList() {
   const { policies, loading } = useInsurance()
+  const { usdJpy } = useExchangeRate()
   const [selectedFamily, setSelectedFamily] = useState<string>(ALL_FAMILY_ID)
   const [category, setCategory] = useState<string>(ALL)
   const [insurer, setInsurer] = useState<string>(ALL)
   const [status, setStatus] = useState<string>(ALL)
   const [keyword, setKeyword] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('updated')
 
   const persons = useMemo(() => listInsuredPersons(policies), [policies])
   const insurers = useMemo(
@@ -37,8 +42,16 @@ export default function PolicyList() {
         (p) => p.productName.toLowerCase().includes(k) || p.insuranceCompany.toLowerCase().includes(k),
       )
     }
-    return result
-  }, [policies, selectedFamily, category, insurer, status, keyword])
+    return [...result].sort((a, b) => {
+      if (sortOrder === 'contract-new') return (b.contractDate ?? '').localeCompare(a.contractDate ?? '')
+      if (sortOrder === 'premium-high') {
+        const monthlyYen = (policy: typeof a) => toMonthlyPremium(policy) * (policy.currency === 'USD' ? (usdJpy ?? 0) : 1)
+        return monthlyYen(b) - monthlyYen(a)
+      }
+      if (sortOrder === 'name') return a.productName.localeCompare(b.productName, 'ja')
+      return b.updatedAt.localeCompare(a.updatedAt)
+    })
+  }, [policies, selectedFamily, category, insurer, status, keyword, sortOrder, usdJpy])
 
   const hasActiveFilters = category !== ALL || insurer !== ALL || status !== ALL || keyword.trim() !== ''
 
@@ -119,6 +132,18 @@ export default function PolicyList() {
               {STATUS_META[s].label}
             </option>
           ))}
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          aria-label="並び順"
+          className="rounded-xl border border-line bg-plane px-3 py-2.5 text-sm text-ink focus:border-brand-400 focus:bg-white focus:outline-none"
+        >
+          <option value="updated">並び順: 更新が新しい</option>
+          <option value="contract-new">契約日が新しい</option>
+          <option value="premium-high" disabled={usdJpy === null && policies.some((policy) => policy.currency === 'USD')}>月額換算保険料が高い</option>
+          <option value="name">商品名順</option>
         </select>
 
         {hasActiveFilters && (
