@@ -43,6 +43,7 @@ export default function Dashboard() {
     () => dollarPolicies.reduce((sum, policy) => sum + toAnnualPremium(policy), 0),
     [dollarPolicies],
   )
+  const exchangeRateUnavailable = usdJpy === null && dollarPolicies.length > 0
   const upcoming = useMemo(() => sortByUpcoming(activePolicies), [activePolicies])
   const nextUpcoming = upcoming.find((u) => u.days >= 0) ?? upcoming[0]
 
@@ -96,7 +97,7 @@ export default function Dashboard() {
               icon={<ListChecks size={20} />}
             />
             <StatCard
-              label={selectedFamily === ALL_FAMILY_ID ? '家族全体の毎月の保険料' : `${selectedFamily}の毎月の保険料`}
+              label={`${selectedFamily === ALL_FAMILY_ID ? '家族全体' : selectedFamily}の毎月の保険料${exchangeRateUnavailable ? '（円建て分）' : ''}`}
               value={formatYen(Math.round(monthlyTotal)).replace('円', '')}
               unit="円"
               sub={
@@ -104,7 +105,7 @@ export default function Dashboard() {
                   <span className="block">年間約 {formatYen(Math.round(annualTotal))}</span>
                   {dollarPolicies.length > 0 && (
                     <span className="block font-semibold text-brand-700">
-                      うちドル建て {formatUsd(monthlyDollarTotal)}/月・{formatUsd(annualDollarTotal)}/年
+                      {exchangeRateUnavailable ? '別途ドル建て' : 'うちドル建て'} {formatUsd(monthlyDollarTotal)}/月・{formatUsd(annualDollarTotal)}/年
                     </span>
                   )}
                   <span className="block text-[11px]">
