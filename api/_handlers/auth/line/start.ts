@@ -11,7 +11,11 @@ import {
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET'])
   const flow = req.query.flow === 'login' ? 'login' : 'link'
-  const next = req.query.next === 'consultation' ? 'consultation' : 'home'
+  const next = req.query.next === 'consultation'
+    ? 'consultation'
+    : flow === 'link' && req.query.next === 'advisor'
+      ? 'advisor'
+      : 'home'
   if (flow === 'link') await requireSessionUser(req, res)
 
   const config = getLineConfig()

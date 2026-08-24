@@ -1,11 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarClock, CheckCircle2, Eye, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
+import { BellRing, CalendarClock, CheckCircle2, Eye, Link2, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic } from '../types/insurance'
 
 const OFFICIAL_LINE_CHAT_URL = 'https://chat.line.biz/account/@615aecnm'
+
+interface LineConnectionStatus {
+  configured: boolean
+  linked: boolean
+  displayName: string | null
+  linkedAt: string | null
+}
 
 const TOPIC_LABELS: Record<ConsultationTopic, string> = {
   review: '保険全体の整理',
@@ -59,6 +66,8 @@ export default function AdvisorDashboard() {
   const [appointmentsLoading, setAppointmentsLoading] = useState(true)
   const [appointmentSavingId, setAppointmentSavingId] = useState<string | null>(null)
   const [appointmentError, setAppointmentError] = useState<string | null>(null)
+  const [lineConnection, setLineConnection] = useState<LineConnectionStatus | null>(null)
+  const [lineError, setLineError] = useState<string | null>(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -100,9 +109,14 @@ export default function AdvisorDashboard() {
   }
 
   useEffect(() => {
+    const search = new URLSearchParams(window.location.search)
+    if (search.get('line') === 'error') setLineError('LINEを連携できませんでした。別のアカウントと連携済みでないか確認してください。')
     loadClients()
     loadConsultations()
     loadAppointments()
+    api.get<LineConnectionStatus>('/api/auth/line/status')
+      .then(setLineConnection)
+      .catch((err) => setLineError(err instanceof ApiError ? err.message : 'LINE連携状態を確認できませんでした。'))
     api
       .get<{ advisor: AdvisorProfile | null }>('/api/advisor')
       .then((data) =>
@@ -199,6 +213,20 @@ export default function AdvisorDashboard() {
       </div>
 
       <SensitiveInfoNotice />
+
+      <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><BellRing size={16} />相談のLINE通知</h2>
+            <p className="mt-1 text-xs leading-relaxed text-ink-muted">LINE連携すると、新しい相談日時の申込みと契約者による取消を通知します。</p>
+            {lineConnection?.linked && <p className="mt-2 text-xs font-bold text-brand-700">連携済み{lineConnection.displayName ? `：${lineConnection.displayName}` : ''}</p>}
+            {lineError && <p className="mt-2 text-xs font-semibold text-red-600">{lineError}</p>}
+          </div>
+          {lineConnection && !lineConnection.linked && lineConnection.configured && (
+            <a href="/api/auth/line/start?flow=link&next=advisor" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d]"><Link2 size={16} />LINEを連携する</a>
+          )}
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

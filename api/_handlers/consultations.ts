@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
 import { requireSessionUser } from '../_lib/session.js'
 import { writeAuditLog } from '../_lib/audit.js'
+import { createSupabaseAdminClient } from '../_lib/supabaseServer.js'
+import { pushLineText } from '../_lib/lineMessaging.js'
 
 const topicSchema = z.enum(['review', 'renewal', 'family', 'premium', 'other'])
 const createSchema = z.object({
@@ -34,7 +36,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireSessionUser(req, res)
   const { data: customer, error: customerError } = await session.supabase
     .from('users')
-    .select('role, advisor_id')
+    .select('role, advisor_id, display_name')
     .eq('id', session.userId)
     .maybeSingle()
   if (customerError) throw new HttpError(500, '利用者情報を確認できませんでした。')
@@ -86,6 +88,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
     if (error) throw new HttpError(500, '相談を申し込めませんでした。')
     await writeAuditLog(session.supabase, session.userId, 'consultation_appointment_requested', 'advisor', customer.advisor_id)
+
+    const admin = createSupabaseAdminClient()
+    const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', customer.advisor_id).maybeSingle()
+    await pushLineText(
+      advisor?.line_user_id,
+      `${customer.display_name || '契約者'}さんから相談日時の候補が届きました。\n\n担当者画面で内容を確認してください。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`,
+    )
     sendJson(res, 201, { appointment: toResponse(data) })
     return
   }
@@ -105,6 +114,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) throw new HttpError(500, '相談申込みを取り消せませんでした。')
     if (!data) throw new HttpError(404, '対応中の相談申込みが見つかりません。')
     await writeAuditLog(session.supabase, session.userId, 'consultation_appointment_cancelled', 'advisor', data.advisor_user_id)
+
+    const admin = createSupabaseAdminClient()
+    const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', data.advisor_user_id).maybeSingle()
+    await pushLineText(
+      advisor?.line_user_id,
+      `${customer.display_name || '契約者'}さんが相談日時の申込みを取り消しました。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`,
+    )
     sendJson(res, 200, { ok: true })
     return
   }

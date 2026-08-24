@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../_lib/http.js'
 import { requireAdvisorSession } from '../../_lib/session.js'
 import { writeAuditLog } from '../../_lib/audit.js'
+import { createSupabaseAdminClient } from '../../_lib/supabaseServer.js'
+import { pushLineText } from '../../_lib/lineMessaging.js'
 
 const updateSchema = z.discriminatedUnion('status', [
   z.object({ id: z.string().uuid(), status: z.literal('confirmed'), selectedChoice: z.enum(['first', 'second']) }).strict(),
@@ -12,6 +14,18 @@ const updateSchema = z.discriminatedUnion('status', [
 
 const COLUMNS =
   'id, customer_user_id, topic, first_choice_at, second_choice_at, confirmed_start_at, status, requested_at, confirmed_at'
+
+function formatLineDate(value: string): string {
+  return new Date(value).toLocaleString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   const session = await requireAdvisorSession(req, res)
@@ -98,6 +112,15 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (error) throw new HttpError(500, '相談予約を更新できませんでした。')
     if (!data) throw new HttpError(409, '相談予約の状態がすでに変更されています。再読み込みしてください。')
     await writeAuditLog(session.supabase, session.userId, `consultation_appointment_${input.status}`, 'user', current.customer_user_id)
+
+    if (input.status === 'confirmed' || input.status === 'cancelled') {
+      const admin = createSupabaseAdminClient()
+      const { data: customer } = await admin.from('users').select('line_user_id').eq('id', current.customer_user_id).maybeSingle()
+      const notification = input.status === 'confirmed'
+        ? `相談日時が確定しました。\n\n${formatLineDate(values.confirmed_start_at as string)}\n\nアプリで確認できます。\n${new URL('/line?next=consultation', process.env.ALLOWED_ORIGIN).toString()}`
+        : `担当者が相談日時の申込みを取り消しました。必要に応じて担当者へご連絡ください。\n${new URL('/line?next=consultation', process.env.ALLOWED_ORIGIN).toString()}`
+      await pushLineText(customer?.line_user_id, notification)
+    }
     sendJson(res, 200, { ok: true })
     return
   }

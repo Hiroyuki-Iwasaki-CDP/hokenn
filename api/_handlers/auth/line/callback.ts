@@ -37,10 +37,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const nonce = getRequestCookie(req, LINE_NONCE_COOKIE)
   const verifier = getRequestCookie(req, LINE_VERIFIER_COOKIE)
   const flow = getRequestCookie(req, LINE_FLOW_COOKIE)
-  const next = getRequestCookie(req, LINE_NEXT_COOKIE) === 'consultation' ? 'consultation' : 'home'
+  const nextCookie = getRequestCookie(req, LINE_NEXT_COOKIE)
+  const next = nextCookie === 'consultation' || nextCookie === 'advisor' ? nextCookie : 'home'
 
   const errorRedirect = (reason: string) =>
-    flow === 'login' ? lineEntryRedirect('error', reason, next) : settingsRedirect('error', reason)
+    flow === 'login' ? lineEntryRedirect('error', reason, next) : settingsRedirect('error', reason, next)
 
   if ((flow !== 'link' && flow !== 'login') || !code || !nonce || !verifier || !safeStringEqual(returnedState, storedState)) {
     res.redirect(302, errorRedirect('invalid_request'))
@@ -154,7 +155,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   await writeAuditLog(session.supabase, session.userId, 'line_link', 'user')
   res.setHeader('Cache-Control', 'no-store')
-  res.redirect(302, settingsRedirect('linked'))
+  res.redirect(302, settingsRedirect('linked', undefined, next))
 }
 
 export default withErrorHandling(handler)

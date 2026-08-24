@@ -10,7 +10,7 @@ export const LINE_FLOW_COOKIE = 'hokenn-line-flow'
 export const LINE_NEXT_COOKIE = 'hokenn-line-next'
 
 export type LineOAuthFlow = 'link' | 'login'
-export type LineOAuthNext = 'home' | 'consultation'
+export type LineOAuthNext = 'home' | 'consultation' | 'advisor'
 
 const OAUTH_COOKIE_PATH = '/api/auth/line'
 const OAUTH_MAX_AGE_SECONDS = 10 * 60
@@ -116,9 +116,9 @@ export function safeStringEqual(a: string | undefined, b: string | undefined): b
   return left.length === right.length && timingSafeEqual(left, right)
 }
 
-export function settingsRedirect(result: 'linked' | 'error', reason?: string): string {
+export function settingsRedirect(result: 'linked' | 'error', reason?: string, next: LineOAuthNext = 'home'): string {
   const origin = requireEnv('ALLOWED_ORIGIN')
-  const url = new URL('/settings', origin)
+  const url = new URL(next === 'advisor' ? '/advisor' : '/settings', origin)
   url.searchParams.set('line', result)
   if (reason) url.searchParams.set('reason', reason)
   return url.toString()
