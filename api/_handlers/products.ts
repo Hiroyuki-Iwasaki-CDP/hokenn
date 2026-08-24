@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../_lib/http.js'
 import { requireAdvisorSession } from '../_lib/session.js'
-import { createSupabaseServerClient } from '../_lib/supabaseServer.js'
+import { createSupabaseAdminClient } from '../_lib/supabaseServer.js'
 import { writeAuditLog } from '../_lib/audit.js'
 
 const categorySchema = z.enum(['life', 'medical', 'pension', 'auto', 'home', 'accident', 'business'])
@@ -50,7 +50,9 @@ function toRow(input: z.infer<typeof createSchema>) {
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET' && req.query.manage !== '1') {
-    const supabase = createSupabaseServerClient(req, res)
+    // 公開APIは公開済みの安全な列だけをサーバー側で明示的に抽出する。
+    // Cookieの無いLINE内ブラウザでもRLSセッション状態に左右されず空配列を返せるよう、管理クライアントを使用する。
+    const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('insurance_products')
       .select(columns)

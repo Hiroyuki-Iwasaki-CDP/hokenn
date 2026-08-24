@@ -76,6 +76,7 @@ export function createSupabaseAuthClient() {
  *   - 退会処理でのauth.usersの完全削除(supabase.auth.admin.*)
  *   - rate_limit_events の読み書き(顧客データではない運用テーブル)
  *   - exchange_rates の日次更新と公開レートAPIでの読み取り
+ *   - 公開済み取扱商品の安全な列だけを返す公開カタログAPI
  *   - 検証済みLINE IDから既存ユーザーを特定し、本人用セッションを発行するLINEログイン
  * このクライアントはサーバーコードの外(ブラウザ)へは絶対に渡さない。
  */
