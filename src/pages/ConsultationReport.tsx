@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { AlertCircle, CalendarClock, CheckCircle2, ClipboardCheck, MessageCircle, ShieldCheck } from 'lucide-react'
+import { AlertCircle, CalendarClock, CalendarPlus, CheckCircle2, ClipboardCheck, MessageCircle, ShieldCheck } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import { useInsurance } from '../store/InsuranceContext'
 import { useAuth } from '../store/AuthContext'
@@ -8,6 +8,7 @@ import { CATEGORY_ORDER, getCategory, tint } from '../lib/categories'
 import { buildConsultationInsights, registeredActiveCategories } from '../lib/consultationInsights'
 import { sumMonthlyPremiumInYen } from '../lib/calculations'
 import { formatYen } from '../lib/format'
+import { downloadConsultationCalendar } from '../lib/calendar'
 import type { ConsultationAppointment, ConsultationTopic } from '../types/insurance'
 
 const TOPIC_LABELS: Record<ConsultationTopic, string> = {
@@ -178,7 +179,10 @@ export default function ConsultationReport() {
             </div>
             <p className="mt-2 text-xs text-brand-800">相談内容：{TOPIC_LABELS[activeAppointment.topic]}</p>
             {activeAppointment.confirmedStartAt ? (
-              <p className="mt-1 text-sm font-bold text-brand-900">{formatAppointmentDate(activeAppointment.confirmedStartAt)}</p>
+              <div className="mt-1">
+                <p className="text-sm font-bold text-brand-900">{formatAppointmentDate(activeAppointment.confirmedStartAt)}</p>
+                <button type="button" onClick={() => downloadConsultationCalendar(activeAppointment.confirmedStartAt!, '保険相談（担当者）')} className="mt-3 inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800"><CalendarPlus size={14} />カレンダーに追加</button>
+              </div>
             ) : (
               <div className="mt-2 space-y-1 text-xs text-brand-800"><p>第1希望：{formatAppointmentDate(activeAppointment.firstChoiceAt)}</p>{activeAppointment.secondChoiceAt && <p>第2希望：{formatAppointmentDate(activeAppointment.secondChoiceAt)}</p>}</div>
             )}

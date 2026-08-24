@@ -13,7 +13,7 @@ const updateSchema = z.discriminatedUnion('status', [
 ])
 
 const COLUMNS =
-  'id, customer_user_id, topic, first_choice_at, second_choice_at, confirmed_start_at, status, requested_at, confirmed_at'
+  'id, customer_user_id, topic, first_choice_at, second_choice_at, confirmed_start_at, status, requested_at, confirmed_at, completed_at, cancelled_at'
 
 function formatLineDate(value: string): string {
   return new Date(value).toLocaleString('ja-JP', {
@@ -35,8 +35,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       .from('consultation_appointments')
       .select(COLUMNS)
       .eq('advisor_user_id', session.userId)
-      .in('status', ['requested', 'confirmed'])
       .order('requested_at', { ascending: false })
+      .limit(50)
     if (error) throw new HttpError(500, '相談予約を読み込めませんでした。')
 
     const customerIds = [...new Set((appointments ?? []).map((item) => item.customer_user_id))]
@@ -66,6 +66,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
               status: item.status,
               requestedAt: item.requested_at,
               confirmedAt: item.confirmed_at,
+              completedAt: item.completed_at,
+              cancelledAt: item.cancelled_at,
             }]
           : []
       }),
