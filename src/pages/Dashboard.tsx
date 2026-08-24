@@ -7,6 +7,7 @@ import FamilyTabs from '../components/dashboard/FamilyTabs'
 import CoverageMap from '../components/dashboard/CoverageMap'
 import CoverageTimeline from '../components/dashboard/CoverageTimeline'
 import UpcomingList from '../components/dashboard/UpcomingList'
+import FamilySummary from '../components/dashboard/FamilySummary'
 import StatCard from '../components/common/StatCard'
 import PolicyCard from '../components/policy/PolicyCard'
 import EmptyState from '../components/common/EmptyState'
@@ -129,6 +130,8 @@ export default function Dashboard() {
               icon={<CalendarDays size={20} />}
             />
           </div>
+
+          {selectedFamily === ALL_FAMILY_ID && <FamilySummary policies={policies} persons={persons} usdJpy={usdJpy} onSelect={setSelectedFamily} />}
 
           <CoverageMap registeredCategories={registeredCategories} />
 
