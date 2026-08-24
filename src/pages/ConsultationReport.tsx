@@ -50,15 +50,19 @@ export default function ConsultationReport() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const loadAppointments = () => {
-    setAppointmentsLoading(true)
+  const loadAppointments = (silent = false) => {
+    if (!silent) setAppointmentsLoading(true)
     api.get<{ appointments: ConsultationAppointment[] }>('/api/consultations')
       .then((data) => setAppointments(data.appointments))
       .catch((err) => setError(err instanceof ApiError ? err.message : '相談申込みを読み込めませんでした。'))
       .finally(() => setAppointmentsLoading(false))
   }
 
-  useEffect(loadAppointments, [])
+  useEffect(() => {
+    loadAppointments()
+    const refreshTimer = window.setInterval(() => loadAppointments(true), 60_000)
+    return () => window.clearInterval(refreshTimer)
+  }, [])
 
   const activePolicies = useMemo(() => policies.filter((policy) => policy.status === 'active'), [policies])
   const registered = useMemo(() => registeredActiveCategories(activePolicies), [activePolicies])
@@ -168,7 +172,7 @@ export default function ConsultationReport() {
 
       <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><CalendarClock size={17} />FP・担当者へ相談する</h2>
-        <p className="mt-1 text-xs leading-relaxed text-ink-muted">相談テーマと日時候補だけを送信します。証券番号・病歴・口座情報などは入力しません。</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-muted">相談テーマと日時候補だけを送信します。証券番号・病歴・口座情報などは入力しません。相談状況は1分ごとに自動更新します。</p>
 
         {appointmentsLoading ? (
           <p className="mt-4 text-sm text-ink-muted">相談状況を読み込み中…</p>

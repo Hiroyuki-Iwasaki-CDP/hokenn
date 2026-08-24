@@ -29,6 +29,10 @@ function formatAppointmentDate(value: string): string {
   })
 }
 
+function isChoiceExpired(value: string | null): boolean {
+  return !value || new Date(value).getTime() <= Date.now()
+}
+
 function TextInput({
   label,
   value,
@@ -263,9 +267,12 @@ export default function AdvisorDashboard() {
                     <button type="button" onClick={() => downloadConsultationCalendar(appointment.confirmedStartAt!, `保険相談（${appointment.displayName ?? appointment.email}）`)} className="mt-2 inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800"><CalendarPlus size={14} />カレンダーに追加</button>
                   </div>
                 ) : (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'confirmed', 'first')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:opacity-50">第1希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.firstChoiceAt)}</span></button>
-                    {appointment.secondChoiceAt && <button type="button" disabled={appointmentSavingId === appointment.id} onClick={() => updateAppointment(appointment.id, 'confirmed', 'second')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:opacity-50">第2希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.secondChoiceAt)}</span></button>}
+                  <div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button type="button" disabled={appointmentSavingId === appointment.id || isChoiceExpired(appointment.firstChoiceAt)} onClick={() => updateAppointment(appointment.id, 'confirmed', 'first')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:cursor-not-allowed disabled:opacity-50">第1希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.firstChoiceAt)}</span></button>
+                      {appointment.secondChoiceAt && <button type="button" disabled={appointmentSavingId === appointment.id || isChoiceExpired(appointment.secondChoiceAt)} onClick={() => updateAppointment(appointment.id, 'confirmed', 'second')} className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-left text-xs font-bold text-brand-900 disabled:cursor-not-allowed disabled:opacity-50">第2希望で確定<br /><span className="font-medium">{formatAppointmentDate(appointment.secondChoiceAt)}</span></button>}
+                    </div>
+                    {isChoiceExpired(appointment.firstChoiceAt) && isChoiceExpired(appointment.secondChoiceAt) && <p className="mt-2 text-xs font-semibold text-amber-700">候補日時を過ぎています。取消後、契約者へ新しい候補を依頼してください。</p>}
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">

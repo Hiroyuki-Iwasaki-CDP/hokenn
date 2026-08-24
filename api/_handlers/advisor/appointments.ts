@@ -93,6 +93,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (input.status === 'confirmed') {
       const confirmedStartAt = input.selectedChoice === 'first' ? current.first_choice_at : current.second_choice_at
       if (!confirmedStartAt) throw new HttpError(400, '選択された第2希望日時がありません。')
+      if (new Date(confirmedStartAt).getTime() <= Date.now()) {
+        throw new HttpError(400, '過ぎた候補日時は確定できません。申込みを取り消し、新しい候補を依頼してください。')
+      }
       values = { status: 'confirmed', confirmed_start_at: confirmedStartAt, confirmed_at: now }
       allowedCurrent = ['requested', 'confirmed']
     } else if (input.status === 'completed') {
