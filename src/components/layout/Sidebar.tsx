@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { CalendarClock, LayoutGrid, ListChecks, Scale, ShieldCheck, Plus, Settings as SettingsIcon, LogOut } from 'lucide-react'
+import { CalendarClock, History, LayoutGrid, ListChecks, Scale, ShieldCheck, Plus, Settings as SettingsIcon, LogOut } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
 import AdvisorCard from './AdvisorCard'
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/policies', label: '保険一覧', icon: ListChecks, end: false },
   { to: '/compare', label: '保障を比べる', icon: Scale, end: false },
   { to: '/consultation', label: '見える化・相談', icon: CalendarClock, end: false },
+  { to: '/activity', label: '操作履歴', icon: History, end: false },
 ]
 
 export default function Sidebar() {

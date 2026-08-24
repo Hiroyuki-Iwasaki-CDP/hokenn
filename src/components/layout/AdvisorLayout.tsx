@@ -1,11 +1,31 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { BriefcaseBusiness, LogOut, ShieldCheck, Users } from 'lucide-react'
+import { BriefcaseBusiness, History, LogOut, ShieldCheck, Users } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
 import PrivacyFooter from './PrivacyFooter'
+import { api } from '../../lib/api'
+import type { AdvisorAppointment, AdvisorConsultation } from '../../types/insurance'
 
 export default function AdvisorLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    const refreshCount = () => Promise.all([
+      api.get<{ appointments: AdvisorAppointment[] }>('/api/advisor/appointments'),
+      api.get<{ consultations: AdvisorConsultation[] }>('/api/advisor/consultations'),
+    ]).then(([appointmentData, consultationData]) => {
+      const customerIds = new Set([
+        ...appointmentData.appointments.filter((item) => item.status === 'requested').map((item) => item.customerId),
+        ...consultationData.consultations.map((item) => item.customerId),
+      ])
+      setPendingCount(customerIds.size)
+    }).catch(() => undefined)
+    void refreshCount()
+    const timer = window.setInterval(refreshCount, 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -37,7 +57,16 @@ export default function AdvisorLayout() {
             }
           >
             <Users size={18} strokeWidth={2.25} />
-            顧客一覧・自分のプロフィール
+            <span className="min-w-0 flex-1">顧客一覧・自分のプロフィール</span>
+            {pendingCount > 0 && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">{pendingCount}</span>}
+          </NavLink>
+          <NavLink
+            to="/advisor/activity"
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-50 text-brand-900' : 'text-brand-100 hover:bg-white/10 hover:text-white'}`
+            }
+          >
+            <History size={18} strokeWidth={2.25} />操作履歴
           </NavLink>
           <NavLink
             to="/advisor/products"
@@ -76,7 +105,7 @@ export default function AdvisorLayout() {
             ログアウト
           </button>
         </header>
-        <nav className="grid grid-cols-2 border-b border-line bg-white md:hidden">
+        <nav className="grid grid-cols-3 border-b border-line bg-white md:hidden">
           <NavLink
             to="/advisor"
             end
@@ -87,7 +116,15 @@ export default function AdvisorLayout() {
             }
           >
             <Users size={15} />
-            顧客・相談
+            顧客・相談{pendingCount > 0 && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] text-amber-800">{pendingCount}</span>}
+          </NavLink>
+          <NavLink
+            to="/advisor/activity"
+            className={({ isActive }) =>
+              `flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-bold ${isActive ? 'border-b-2 border-brand-700 text-brand-800' : 'text-ink-muted'}`
+            }
+          >
+            <History size={15} />履歴
           </NavLink>
           <NavLink
             to="/advisor/products"

@@ -20,6 +20,7 @@ import policySharing from './_handlers/policy-sharing.js'
 import profile from './_handlers/profile.js'
 import productsCatalog from './_handlers/products.js'
 import consultations from './_handlers/consultations.js'
+import auditLogs from './_handlers/audit-logs.js'
 import exchangeRate from './_handlers/exchange-rate.js'
 import exchangeRateCron from './_handlers/cron/exchange-rate.js'
 import { sendJson } from './_lib/http.js'
@@ -46,6 +47,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/profile': profile,
   '/api/products': productsCatalog,
   '/api/consultations': consultations,
+  '/api/audit-logs': auditLogs,
   '/api/exchange-rate': exchangeRate,
   '/api/cron/exchange-rate': exchangeRateCron,
 }

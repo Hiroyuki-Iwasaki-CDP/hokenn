@@ -47,6 +47,7 @@ export default function ConsultationReport() {
   const [firstChoice, setFirstChoice] = useState(() => defaultChoice(1, 10))
   const [secondChoice, setSecondChoice] = useState(() => defaultChoice(2, 14))
   const [saving, setSaving] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -80,12 +81,25 @@ export default function ConsultationReport() {
     setMessage(null)
     setError(null)
     try {
-      await api.post('/api/consultations', {
+      const payload = {
         topic,
         firstChoiceAt: new Date(firstChoice).toISOString(),
         secondChoiceAt: secondChoice ? new Date(secondChoice).toISOString() : null,
-      })
-      setMessage('担当者へ相談日時の候補を送信しました。確定後に担当者からご連絡します。')
+      }
+      if (editingAppointment) {
+        if (!activeAppointment || activeAppointment.status !== 'requested') {
+          setEditingAppointment(false)
+          setError('担当者が相談日時を確定したため、候補日時は変更できません。')
+          loadAppointments()
+          return
+        }
+        await api.patch('/api/consultations', { id: activeAppointment.id, status: 'requested', ...payload })
+        setMessage('相談日時の候補を変更しました。')
+        setEditingAppointment(false)
+      } else {
+        await api.post('/api/consultations', payload)
+        setMessage('担当者へ相談日時の候補を送信しました。確定後に担当者からご連絡します。')
+      }
       loadAppointments()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : '相談を申し込めませんでした。')
@@ -96,6 +110,7 @@ export default function ConsultationReport() {
 
   const cancel = async (id: string) => {
     if (saving) return
+    if (!window.confirm('この相談申込みを取り消しますか？')) return
     setSaving(true)
     setMessage(null)
     setError(null)
@@ -108,6 +123,15 @@ export default function ConsultationReport() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const startEditing = (appointment: ConsultationAppointment) => {
+    setTopic(appointment.topic)
+    setFirstChoice(localDateTimeValue(new Date(appointment.firstChoiceAt)))
+    setSecondChoice(appointment.secondChoiceAt ? localDateTimeValue(new Date(appointment.secondChoiceAt)) : '')
+    setEditingAppointment(true)
+    setMessage(null)
+    setError(null)
   }
 
   if (loading) return null
@@ -176,7 +200,7 @@ export default function ConsultationReport() {
 
         {appointmentsLoading ? (
           <p className="mt-4 text-sm text-ink-muted">相談状況を読み込み中…</p>
-        ) : activeAppointment ? (
+        ) : activeAppointment && !editingAppointment ? (
           <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-bold text-brand-900">{activeAppointment.status === 'confirmed' ? '相談日時が確定しました' : '担当者の確認待ちです'}</p>
@@ -191,7 +215,10 @@ export default function ConsultationReport() {
             ) : (
               <div className="mt-2 space-y-1 text-xs text-brand-800"><p>第1希望：{formatAppointmentDate(activeAppointment.firstChoiceAt)}</p>{activeAppointment.secondChoiceAt && <p>第2希望：{formatAppointmentDate(activeAppointment.secondChoiceAt)}</p>}</div>
             )}
-            <button type="button" disabled={saving} onClick={() => cancel(activeAppointment.id)} className="mt-3 rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800 disabled:opacity-50">申込みを取り消す</button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {activeAppointment.status === 'requested' && <button type="button" disabled={saving} onClick={() => startEditing(activeAppointment)} className="rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800 disabled:opacity-50">日時候補を変更</button>}
+              <button type="button" disabled={saving} onClick={() => cancel(activeAppointment.id)} className="rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800 disabled:opacity-50">申込みを取り消す</button>
+            </div>
           </div>
         ) : user?.advisorId ? (
           <form onSubmit={submit} className="mt-4 space-y-4">
@@ -200,7 +227,10 @@ export default function ConsultationReport() {
               <label className="block"><span className="mb-1.5 block text-sm font-semibold text-ink">第1希望</span><input required type="datetime-local" min={minDateTime} max={maxDateTime} value={firstChoice} onChange={(event) => setFirstChoice(event.target.value)} className="w-full rounded-xl border border-line bg-plane px-3.5 py-2.5 text-sm text-ink" /></label>
               <label className="block"><span className="mb-1.5 block text-sm font-semibold text-ink">第2希望（任意）</span><input type="datetime-local" min={minDateTime} max={maxDateTime} value={secondChoice} onChange={(event) => setSecondChoice(event.target.value)} className="w-full rounded-xl border border-line bg-plane px-3.5 py-2.5 text-sm text-ink" /></label>
             </div>
-            <button type="submit" disabled={saving || !firstChoice} className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-50"><MessageCircle size={16} />{saving ? '送信しています…' : '日時候補を担当者へ送る'}</button>
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" disabled={saving || !firstChoice} className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-50"><MessageCircle size={16} />{saving ? '送信しています…' : editingAppointment ? '変更内容を保存' : '日時候補を担当者へ送る'}</button>
+              {editingAppointment && <button type="button" disabled={saving} onClick={() => setEditingAppointment(false)} className="rounded-xl border border-line px-4 py-2.5 text-sm font-bold text-ink-secondary">変更をやめる</button>}
+            </div>
           </form>
         ) : (
           <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">担当代理店が設定されていないため、アプリからの相談申込みはまだ利用できません。</p>

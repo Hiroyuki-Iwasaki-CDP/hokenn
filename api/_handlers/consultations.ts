@@ -12,7 +12,10 @@ const createSchema = z.object({
   firstChoiceAt: z.string().datetime({ offset: true }),
   secondChoiceAt: z.string().datetime({ offset: true }).nullable(),
 }).strict()
-const cancelSchema = z.object({ id: z.string().uuid(), status: z.literal('cancelled') }).strict()
+const patchSchema = z.discriminatedUnion('status', [
+  z.object({ id: z.string().uuid(), status: z.literal('cancelled') }).strict(),
+  createSchema.extend({ id: z.string().uuid(), status: z.literal('requested') }).strict(),
+])
 
 const SELECT_COLUMNS =
   'id, topic, first_choice_at, second_choice_at, confirmed_start_at, status, requested_at, confirmed_at, completed_at, cancelled_at'
@@ -30,6 +33,23 @@ function toResponse(row: Record<string, unknown>) {
     completedAt: row.completed_at,
     cancelledAt: row.cancelled_at,
   }
+}
+
+function validatedChoices(input: z.infer<typeof createSchema>) {
+  const first = new Date(input.firstChoiceAt)
+  const second = input.secondChoiceAt ? new Date(input.secondChoiceAt) : null
+  const earliest = Date.now() + 30 * 60 * 1000
+  const latest = Date.now() + 90 * 24 * 60 * 60 * 1000
+  if (first.getTime() < earliest || first.getTime() > latest) {
+    throw new HttpError(400, '第1希望は30分後から90日以内で選択してください。')
+  }
+  if (second && (second.getTime() < earliest || second.getTime() > latest)) {
+    throw new HttpError(400, '第2希望は30分後から90日以内で選択してください。')
+  }
+  if (second && second.getTime() === first.getTime()) {
+    throw new HttpError(400, '第2希望は第1希望と異なる日時を選択してください。')
+  }
+  return { first, second }
 }
 
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -58,19 +78,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     assertTrustedOrigin(req)
     if (!customer.advisor_id) throw new HttpError(400, '担当代理店が設定されていないため、相談を申し込めません。')
     const input = createSchema.parse(await readJsonBody(req))
-    const first = new Date(input.firstChoiceAt)
-    const second = input.secondChoiceAt ? new Date(input.secondChoiceAt) : null
-    const earliest = Date.now() + 30 * 60 * 1000
-    const latest = Date.now() + 90 * 24 * 60 * 60 * 1000
-    if (first.getTime() < earliest || first.getTime() > latest) {
-      throw new HttpError(400, '第1希望は30分後から90日以内で選択してください。')
-    }
-    if (second && (second.getTime() < earliest || second.getTime() > latest)) {
-      throw new HttpError(400, '第2希望は30分後から90日以内で選択してください。')
-    }
-    if (second && second.getTime() === first.getTime()) {
-      throw new HttpError(400, '第2希望は第1希望と異なる日時を選択してください。')
-    }
+    const { first, second } = validatedChoices(input)
 
     const { data, error } = await session.supabase
       .from('consultation_appointments')
@@ -101,7 +109,27 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'PATCH') {
     assertTrustedOrigin(req)
-    const input = cancelSchema.parse(await readJsonBody(req))
+    const input = patchSchema.parse(await readJsonBody(req))
+    if (input.status === 'requested') {
+      const { first, second } = validatedChoices(input)
+      const { data, error } = await session.supabase
+        .from('consultation_appointments')
+        .update({ topic: input.topic, first_choice_at: first.toISOString(), second_choice_at: second?.toISOString() ?? null })
+        .eq('id', input.id)
+        .eq('customer_user_id', session.userId)
+        .eq('status', 'requested')
+        .select('id, advisor_user_id')
+        .maybeSingle()
+      if (error) throw new HttpError(500, '日時候補を変更できませんでした。')
+      if (!data) throw new HttpError(409, '担当者がすでに日時を確定しています。最新の状態を確認してください。')
+      await writeAuditLog(session.supabase, session.userId, 'consultation_appointment_rescheduled', 'advisor', data.advisor_user_id)
+      const admin = createSupabaseAdminClient()
+      const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', data.advisor_user_id).maybeSingle()
+      await pushLineText(advisor?.line_user_id, `${customer.display_name || '契約者'}さんが相談日時の候補を変更しました。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`)
+      sendJson(res, 200, { ok: true })
+      return
+    }
+
     const now = new Date().toISOString()
     const { data, error } = await session.supabase
       .from('consultation_appointments')

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AlertTriangle, CheckCircle2, History, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../store/AuthContext'
 import type { AdvisorProfile, AuthUser, PolicySharingStatus } from '../types/insurance'
@@ -217,6 +217,8 @@ export default function Settings() {
         <p className="text-xs font-semibold tracking-wide text-brand-600 uppercase">Settings</p>
         <h1 className="mt-1 text-2xl font-bold text-ink sm:text-3xl">設定</h1>
       </div>
+
+      <Link to="/activity" className="flex items-center justify-between rounded-2xl border border-line bg-white p-5 text-sm font-bold text-ink hover:bg-plane sm:p-6"><span className="flex items-center gap-2"><History size={17} />操作履歴を確認</span><span className="text-xs font-semibold text-brand-700">最新100件</span></Link>
 
       <form onSubmit={handleProfileSubmit} className="space-y-4 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">

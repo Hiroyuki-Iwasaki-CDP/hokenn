@@ -191,6 +191,13 @@ export interface AdvisorAppointment extends ConsultationAppointment {
   displayName: string | null
 }
 
+export interface AuditLogEntry {
+  id: string
+  action: string
+  resourceType: string
+  createdAt: string
+}
+
 export type ProductCategory = 'life' | 'medical' | 'auto' | 'home' | 'accident' | 'business'
 
 export interface InsuranceProduct {

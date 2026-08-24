@@ -26,6 +26,7 @@ import Products from './pages/Products'
 import LineEntry from './pages/LineEntry'
 import InviteConfirm from './pages/InviteConfirm'
 import ConsultationReport from './pages/ConsultationReport'
+import ActivityLog from './pages/ActivityLog'
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/advisor" element={<AdvisorDashboard />} />
               <Route path="/advisor/clients/:id" element={<AdvisorClientPolicies />} />
               <Route path="/advisor/products" element={<AdvisorProducts />} />
+              <Route path="/advisor/activity" element={<ActivityLog />} />
             </Route>
           </Route>
 
@@ -80,6 +82,7 @@ export default function App() {
               <Route path="/compare" element={<Compare />} />
               <Route path="/consultation" element={<ConsultationReport />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/activity" element={<ActivityLog />} />
             </Route>
           </Route>
           </Routes>

@@ -83,9 +83,16 @@ export default function AdvisorDashboard() {
   const [advisorLoading, setAdvisorLoading] = useState(true)
   const [advisorSaving, setAdvisorSaving] = useState(false)
   const [advisorMessage, setAdvisorMessage] = useState<string | null>(null)
+  const [historyStatus, setHistoryStatus] = useState<'all' | 'completed' | 'cancelled'>('all')
+  const [historyDays, setHistoryDays] = useState<'30' | '90' | 'all'>('90')
 
   const activeAppointments = appointments.filter((item) => item.status === 'requested' || item.status === 'confirmed')
-  const pastAppointments = appointments.filter((item) => item.status === 'completed' || item.status === 'cancelled').slice(0, 10)
+  const historyCutoff = historyDays === 'all' ? null : Date.now() - Number(historyDays) * 24 * 60 * 60 * 1000
+  const allPastAppointments = appointments.filter((item) => item.status === 'completed' || item.status === 'cancelled')
+  const pastAppointments = allPastAppointments.filter((item) =>
+    (historyStatus === 'all' || item.status === historyStatus)
+    && (historyCutoff === null || new Date(item.requestedAt).getTime() >= historyCutoff),
+  )
 
   const loadClients = () => {
     setClientsLoading(true)
@@ -152,6 +159,7 @@ export default function AdvisorDashboard() {
 
   const handleResolveConsultation = async (id: string) => {
     if (consultationSavingId) return
+    if (!window.confirm('このLINE相談を「対応済み」にしますか？')) return
     setConsultationSavingId(id)
     setConsultationError(null)
     try {
@@ -170,6 +178,8 @@ export default function AdvisorDashboard() {
     selectedChoice?: 'first' | 'second',
   ) => {
     if (appointmentSavingId) return
+    if (status === 'completed' && !window.confirm('この相談を「相談完了」にしますか？')) return
+    if (status === 'cancelled' && !window.confirm('この相談申込みを取り消しますか？契約者側にも取消として表示されます。')) return
     setAppointmentSavingId(id)
     setAppointmentError(null)
     try {
@@ -284,17 +294,23 @@ export default function AdvisorDashboard() {
             ))}
           </ul>
         )}
-        {pastAppointments.length > 0 && (
+        {allPastAppointments.length > 0 && (
           <div className="mt-5 border-t border-line pt-4">
-            <h3 className="text-xs font-bold text-ink-secondary">過去の対応（最新10件）</h3>
-            <ul className="mt-2 divide-y divide-line rounded-xl bg-plane px-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-xs font-bold text-ink-secondary">過去の対応</h3>
+              <div className="flex gap-2">
+                <select aria-label="対応状態" value={historyStatus} onChange={(event) => setHistoryStatus(event.target.value as typeof historyStatus)} className="rounded-lg border border-line bg-white px-2 py-1.5 text-[11px] text-ink-secondary"><option value="all">完了・取消</option><option value="completed">完了のみ</option><option value="cancelled">取消のみ</option></select>
+                <select aria-label="対象期間" value={historyDays} onChange={(event) => setHistoryDays(event.target.value as typeof historyDays)} className="rounded-lg border border-line bg-white px-2 py-1.5 text-[11px] text-ink-secondary"><option value="30">30日以内</option><option value="90">90日以内</option><option value="all">全期間</option></select>
+              </div>
+            </div>
+            {pastAppointments.length === 0 ? <p className="mt-2 rounded-xl bg-plane px-4 py-3 text-xs text-ink-muted">条件に一致する履歴はありません。</p> : <ul className="mt-2 divide-y divide-line rounded-xl bg-plane px-4">
               {pastAppointments.map((appointment) => (
                 <li key={appointment.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div><p className="text-xs font-bold text-ink">{appointment.displayName ?? appointment.email}</p><p className="mt-0.5 text-[11px] text-ink-muted">{TOPIC_LABELS[appointment.topic]}・申込 {formatAppointmentDate(appointment.requestedAt)}</p></div>
                   <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${appointment.status === 'completed' ? 'bg-brand-50 text-brand-800' : 'bg-white text-ink-muted'}`}>{appointment.status === 'completed' ? '相談完了' : '取消'}</span>
                 </li>
               ))}
-            </ul>
+            </ul>}
           </div>
         )}
         {appointmentError && <p className="mt-2 text-xs font-semibold text-red-600">{appointmentError}</p>}
