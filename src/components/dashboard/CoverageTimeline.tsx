@@ -93,7 +93,8 @@ export default function CoverageTimeline({ policies }: { policies: InsurancePoli
         </div>
       </div>
 
-      <div className="mt-5 hidden pl-1 sm:block">
+      {/* 各行は左に36pxのアイコンと12pxの余白があるため、年代軸も48px揃えて開始する。 */}
+      <div className="mt-5 hidden sm:block sm:pl-12">
         <div className="relative h-11 border-b border-line text-[10px] text-ink-muted">
           {yearTicks.map((year) => (
             <span key={year} className="absolute top-0 -translate-x-1/2 tabular-nums" style={{ left: `${yearPct(year)}%` }}>
