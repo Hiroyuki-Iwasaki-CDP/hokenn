@@ -78,7 +78,7 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
           <Value label="契約タイプ">
             {policy.contractType ? CONTRACT_TYPE_LABEL[policy.contractType] : '—'}
           </Value>
-          <Value label="次回更新日">{formatDate(policy.renewalDate)}</Value>
+          {policy.renewalDate && <Value label="次回更新日">{formatDate(policy.renewalDate)}</Value>}
           <Value label="満期日">{formatDate(policy.maturityDate)}</Value>
           <Value label="保障終了年齢">{policy.coverageEndAge ? `${policy.coverageEndAge}歳` : '—'}</Value>
           <Value label="払込満了日">{formatDate(policy.premiumEndDate)}</Value>

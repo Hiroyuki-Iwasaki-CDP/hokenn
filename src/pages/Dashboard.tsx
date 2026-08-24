@@ -95,7 +95,7 @@ export default function Dashboard() {
               icon={<ListChecks size={20} />}
             />
             <StatCard
-              label="毎月の保険料"
+              label={selectedFamily === ALL_FAMILY_ID ? '家族全体の毎月の保険料' : `${selectedFamily}の毎月の保険料`}
               value={formatYen(Math.round(monthlyTotal)).replace('円', '')}
               unit="円"
               sub={

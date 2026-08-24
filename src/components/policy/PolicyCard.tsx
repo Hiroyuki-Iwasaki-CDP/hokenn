@@ -20,15 +20,15 @@ export default function PolicyCard({ policy }: { policy: InsurancePolicy }) {
   return (
     <div className="flex flex-col rounded-2xl border border-line bg-white p-5 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           <CategoryIcon category={policy.category} />
           <div className="min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-plane px-2 py-0.5 text-[11px] font-semibold text-ink-secondary">
+              <span className="max-w-full truncate rounded-full bg-plane px-2 py-0.5 text-[11px] font-semibold text-ink-secondary">
                 {policy.insuredPersonName}
               </span>
             </div>
-            <h3 className="truncate text-[15px] font-bold text-ink">{policy.productName}</h3>
+            <h3 className="line-clamp-2 break-words text-[15px] leading-snug font-bold text-ink">{policy.productName}</h3>
             <p className="truncate text-xs text-ink-muted">{policy.insuranceCompany}</p>
           </div>
         </div>

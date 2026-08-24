@@ -458,7 +458,7 @@ export default function PolicyForm() {
                 ['保障内容の要約', draft.coverageSummary || '未入力'],
                 ['契約日', draft.contractDate ? formatDate(draft.contractDate) : '未入力'],
                 ['契約タイプ', CONTRACT_TYPE_LABEL[draft.contractType]],
-                ['次回更新日', draft.renewalDate ? formatDate(draft.renewalDate) : '未入力(終身扱い)'],
+                ...(draft.renewalDate ? [['次回更新日', formatDate(draft.renewalDate)]] : []),
                 ['満期日', draft.maturityDate ? formatDate(draft.maturityDate) : '未入力'],
                 ['解約返戻金', draft.hasCashValue ? 'あり' : 'なし'],
                 ['受取人', draft.beneficiary || '未入力'],
