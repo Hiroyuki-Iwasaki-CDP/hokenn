@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { CheckCircle2, PackagePlus, Pencil, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Eye, PackagePlus, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import type { InsuranceProduct, ProductCategory } from '../types/insurance'
 
 const CATEGORY_LABELS: Record<ProductCategory, string> = {
   life: '生命保険',
   medical: '医療・がん保険',
+  pension: '年金保険',
   auto: '自動車保険',
   home: '火災・地震保険',
   accident: '傷害・その他の保険',
@@ -92,6 +93,23 @@ export default function AdvisorProducts() {
     }
   }
 
+  const removeDraft = async (product: InsuranceProduct) => {
+    if (saving || product.isPublished || !window.confirm(`下書き「${product.productName}」を削除しますか？`)) return
+    setSaving(true)
+    setMessage(null)
+    setError(null)
+    try {
+      await api.del('/api/products', { id: product.id })
+      setMessage('下書きを削除しました。')
+      if (editingId === product.id) reset()
+      load()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : '下書きを削除できませんでした。')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -122,7 +140,7 @@ export default function AdvisorProducts() {
       <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="mb-3 text-sm font-bold text-ink">登録済み商品</h2>
         {loading ? <p className="text-sm text-ink-muted">読み込み中…</p> : products.length === 0 ? <p className="text-sm text-ink-muted">まだ商品は登録されていません。</p> : (
-          <ul className="divide-y divide-line">{products.map((product) => <li key={product.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-bold text-ink">{product.productName}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${product.isPublished ? 'bg-brand-50 text-brand-700' : 'bg-plane text-ink-muted'}`}>{product.isPublished ? '公開中' : '下書き'}</span></div><p className="text-xs text-ink-secondary">{product.insurerName}・{CATEGORY_LABELS[product.category]}</p></div><button type="button" onClick={() => startEdit(product)} className="inline-flex shrink-0 items-center justify-center gap-1 rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink-secondary hover:bg-plane"><Pencil size={13} />編集</button></li>)}</ul>
+          <ul className="divide-y divide-line">{products.map((product) => <li key={product.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-bold text-ink">{product.productName}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${product.isPublished ? 'bg-brand-50 text-brand-700' : 'bg-plane text-ink-muted'}`}>{product.isPublished ? '公開中' : '下書き'}</span></div><p className="text-xs text-ink-secondary">{product.insurerName}・{CATEGORY_LABELS[product.category]}</p></div><div className="flex shrink-0 flex-wrap gap-2"><a href={`/products?preview=${encodeURIComponent(product.id)}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-1 rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink-secondary hover:bg-plane"><Eye size={13} />プレビュー</a><button type="button" onClick={() => startEdit(product)} className="inline-flex items-center justify-center gap-1 rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink-secondary hover:bg-plane"><Pencil size={13} />編集</button>{!product.isPublished && <button type="button" disabled={saving} onClick={() => removeDraft(product)} className="inline-flex items-center justify-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={13} />削除</button>}</div></li>)}</ul>
         )}
         {products.some((product) => product.isPublished) && <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-brand-700"><CheckCircle2 size={14} />公開ページへ反映されています。</p>}
       </section>

@@ -5,7 +5,7 @@ import { requireAdvisorSession } from '../_lib/session.js'
 import { createSupabaseServerClient } from '../_lib/supabaseServer.js'
 import { writeAuditLog } from '../_lib/audit.js'
 
-const categorySchema = z.enum(['life', 'medical', 'auto', 'home', 'accident', 'business'])
+const categorySchema = z.enum(['life', 'medical', 'pension', 'auto', 'home', 'accident', 'business'])
 const productFields = {
   category: categorySchema,
   insurerName: z.string().trim().min(1, '保険会社名を入力してください。').max(100),
@@ -17,6 +17,7 @@ const productFields = {
 }
 const createSchema = z.object(productFields).strict()
 const updateSchema = z.object({ id: z.string().uuid(), ...productFields }).strict()
+const deleteSchema = z.object({ id: z.string().uuid() }).strict()
 
 const columns = 'id, category, insurer_name, product_name, summary, official_url, is_published, sort_order, created_at, updated_at'
 
@@ -106,7 +107,26 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  methodNotAllowed(res, ['GET', 'POST', 'PUT'])
+  if (req.method === 'DELETE') {
+    assertTrustedOrigin(req)
+    const input = deleteSchema.parse(await readJsonBody(req))
+    const { data: product, error: lookupError } = await session.supabase
+      .from('insurance_products')
+      .select('id, is_published')
+      .eq('id', input.id)
+      .eq('advisor_user_id', session.userId)
+      .maybeSingle()
+    if (lookupError) throw new HttpError(500, '取扱商品を確認できませんでした。')
+    if (!product) throw new HttpError(404, '取扱商品が見つかりません。')
+    if (product.is_published) throw new HttpError(409, '公開中の商品は削除できません。先に非公開へ変更してください。')
+    const { error } = await session.supabase.from('insurance_products').delete().eq('id', input.id).eq('advisor_user_id', session.userId)
+    if (error) throw new HttpError(500, '取扱商品を削除できませんでした。')
+    await writeAuditLog(session.supabase, session.userId, 'product_delete', 'insurance_product', input.id)
+    sendJson(res, 200, { ok: true })
+    return
+  }
+
+  methodNotAllowed(res, ['GET', 'POST', 'PUT', 'DELETE'])
 }
 
 export default withErrorHandling(handler)

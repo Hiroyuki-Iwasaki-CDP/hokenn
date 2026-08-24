@@ -198,7 +198,7 @@ export interface AuditLogEntry {
   createdAt: string
 }
 
-export type ProductCategory = 'life' | 'medical' | 'auto' | 'home' | 'accident' | 'business'
+export type ProductCategory = 'life' | 'medical' | 'pension' | 'auto' | 'home' | 'accident' | 'business'
 
 export interface InsuranceProduct {
   id: string

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BriefcaseBusiness, Car, HeartPulse, Home, MessageCircle, Shield, Umbrella } from 'lucide-react'
+import { BriefcaseBusiness, Car, HeartPulse, Home, Landmark, MessageCircle, Shield, Umbrella } from 'lucide-react'
 import { OPERATOR_NAME } from '../config/service'
 import { api } from '../lib/api'
 import type { InsuranceProduct, ProductCategory } from '../types/insurance'
@@ -7,6 +7,12 @@ import type { InsuranceProduct, ProductCategory } from '../types/insurance'
 const OFFICIAL_LINE_URL = 'https://line.me/R/ti/p/@615aecnm'
 
 const categories = [
+  {
+    key: 'pension' as const,
+    title: '年金保険',
+    description: '老後資金の準備や受取方法など、将来に向けた備えを確認します。',
+    icon: Landmark,
+  },
   {
     key: 'life' as const,
     title: '生命保険',
@@ -51,12 +57,13 @@ const categoryByKey = new Map<ProductCategory, (typeof categories)[number]>(
 
 export default function Products() {
   const [products, setProducts] = useState<InsuranceProduct[]>([])
+  const previewId = new URLSearchParams(window.location.search).get('preview')
 
   useEffect(() => {
-    api.get<{ products: InsuranceProduct[] }>('/api/products')
-      .then((data) => setProducts(data.products))
+    api.get<{ products: InsuranceProduct[] }>(previewId ? '/api/products?manage=1' : '/api/products')
+      .then((data) => setProducts(previewId ? data.products.filter((product) => product.id === previewId) : data.products))
       .catch(() => setProducts([]))
-  }, [])
+  }, [previewId])
 
   return (
     <article className="space-y-7">
@@ -67,6 +74,8 @@ export default function Products() {
           気になる分野を確認して、詳しい取扱商品や保険会社について担当者へご相談ください。
         </p>
       </div>
+
+      {previewId && <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">担当者限定プレビューです。下書きの商品は一般公開されていません。</p>}
 
       {products.length > 0 && (
         <section className="space-y-3">
