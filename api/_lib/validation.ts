@@ -45,6 +45,13 @@ export const inviteClientSchema = z.object({
   email: emailSchema,
 })
 
+export const acceptInvitationSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]{43}$/, '招待リンクが正しくありません。'),
+})
+
 export const policySharingUpdateSchema = z.discriminatedUnion('enabled', [
   z.object({
     enabled: z.literal(true),

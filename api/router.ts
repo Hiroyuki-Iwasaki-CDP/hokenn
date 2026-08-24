@@ -8,6 +8,7 @@ import lineCallback from './_handlers/auth/line/callback.js'
 import lineStart from './_handlers/auth/line/start.js'
 import lineStatus from './_handlers/auth/line/status.js'
 import logout from './_handlers/auth/logout.js'
+import acceptInvitation from './_handlers/auth/accept-invitation.js'
 import requestCode from './_handlers/auth/request-code.js'
 import session from './_handlers/auth/session.js'
 import verifyCode from './_handlers/auth/verify-code.js'
@@ -32,6 +33,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/auth/line/start': lineStart,
   '/api/auth/line/status': lineStatus,
   '/api/auth/logout': logout,
+  '/api/auth/accept-invitation': acceptInvitation,
   '/api/auth/request-code': requestCode,
   '/api/auth/session': session,
   '/api/auth/verify-code': verifyCode,

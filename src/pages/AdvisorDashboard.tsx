@@ -116,7 +116,7 @@ export default function AdvisorDashboard() {
     setInviting(true)
     try {
       await api.post('/api/advisor/clients', { email: inviteEmail.trim() })
-      setInviteMessage('招待メールを送信しました。ご本人にメール内の6桁コードでログインするようご案内ください。')
+      setInviteMessage('登録用の招待メールを送信しました。ご本人にメールの「登録を始める」から進むようご案内ください。')
       setInviteEmail('')
       loadClients()
     } catch (err) {

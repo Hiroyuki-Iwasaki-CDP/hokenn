@@ -24,6 +24,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import Products from './pages/Products'
 import LineEntry from './pages/LineEntry'
+import InviteConfirm from './pages/InviteConfirm'
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
           </Route>
 
           <Route path="/line" element={<LineEntry />} />
+          <Route path="/invite/confirm" element={<InviteConfirm />} />
 
           <Route element={<RequireAuthOnly />}>
             <Route path="/onboarding" element={<Onboarding />} />

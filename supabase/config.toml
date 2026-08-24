@@ -162,7 +162,7 @@ site_url = "https://hokenn.vercel.app"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication。
 # デフォルトのメールテンプレートに含まれる確認リンク({{ .ConfirmationURL }})が誤ったURLへ
 # 遷移していた原因。ローカル開発用に127.0.0.1も残す。
-additional_redirect_urls = ["https://hokenn.vercel.app", "http://127.0.0.1:5173"]
+additional_redirect_urls = ["https://hokenn.vercel.app", "https://hokenn.vercel.app/**", "http://127.0.0.1:5173", "http://127.0.0.1:5173/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -258,13 +258,12 @@ sender_name = "わが家の保険"
 # 「6桁コードを入力する」フローと噛み合っていなかった(コードが届かないように見えていた)。
 # カスタムSMTP(Resend)設定済みのため反映する。
 [auth.email.template.magic_link]
-subject = "【わが家の保険】ログイン用の認証コード"
+subject = "【わが家の保険】登録・ログインのご案内"
 content_path = "./supabase/templates/magic_link.html"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+[auth.email.template.invite]
+subject = "【わが家の保険】保険代理店から招待されました"
+content_path = "./supabase/templates/invite.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
