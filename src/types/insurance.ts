@@ -156,6 +156,7 @@ export interface AdvisorClient {
   email: string
   displayName: string | null
   onboarded: boolean
+  lineLinked: boolean
   invitedAt: string
   policySharingEnabled: boolean
   policySharingGrantedAt: string | null

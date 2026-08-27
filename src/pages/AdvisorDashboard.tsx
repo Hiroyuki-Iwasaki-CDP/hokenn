@@ -102,6 +102,8 @@ export default function AdvisorDashboard() {
   const [historyDays, setHistoryDays] = useState<'30' | '90' | 'all'>('90')
 
   const activeAppointments = appointments.filter((item) => item.status === 'requested' || item.status === 'confirmed')
+  const onboardedClients = clients.filter((client) => client.onboarded)
+  const lineLinkedClientCount = onboardedClients.filter((client) => client.lineLinked).length
   const historyCutoff = historyDays === 'all' ? null : Date.now() - Number(historyDays) * 24 * 60 * 60 * 1000
   const allPastAppointments = appointments.filter((item) => item.status === 'completed' || item.status === 'cancelled')
   const pastAppointments = allPastAppointments.filter((item) =>
@@ -491,10 +493,10 @@ export default function AdvisorDashboard() {
       </div>
 
       <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-ink">
-          <Users size={16} />
-          顧客一覧
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><Users size={16} />顧客一覧</h2>
+          {!clientsLoading && onboardedClients.length > 0 && <span className="rounded-full bg-[#e9f9ef] px-2.5 py-1 text-[11px] font-bold text-[#058a3e]">LINE連携 {lineLinkedClientCount}/{onboardedClients.length}人</span>}
+        </div>
         {clientsLoading ? (
           <p className="text-sm text-ink-muted">読み込み中…</p>
         ) : clients.length === 0 ? (
@@ -515,6 +517,11 @@ export default function AdvisorDashboard() {
                   >
                     {c.onboarded ? '利用開始済み' : '招待済み・未ログイン'}
                   </span>
+                  {c.onboarded && (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${c.lineLinked ? 'bg-[#e9f9ef] text-[#058a3e]' : 'bg-amber-50 text-amber-700'}`}>
+                      <MessageCircle size={12} />{c.lineLinked ? 'LINE連携済み' : 'LINE未連携'}
+                    </span>
+                  )}
                   {c.policySharingEnabled ? (
                     <Link
                       to={`/advisor/clients/${c.id}`}

@@ -15,7 +15,8 @@ function invitationHash(token: string): string {
 
 /**
  * FP専用: 自分が招待した顧客の一覧・招待。
- * 一覧では氏名・メール・登録状況と、契約者本人が保険情報の全件共有を許可しているかだけを扱う。
+ * 一覧では氏名・メール・登録状況・LINE連携の有無と、契約者本人が保険情報の全件共有を許可しているかだけを扱う。
+ * LINEユーザーIDやLINE表示名そのものは担当者へ返さない。
  * 実際の保険情報は共有許可を再確認する専用の読み取りAPIからのみ取得する。
  */
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -25,7 +26,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // advisor_id = 自分 の行のみをRLS(advisor_select_own_clients)経由で取得する。
     const { data, error } = await session.supabase
       .from('users')
-      .select('id, email, display_name, terms_accepted_at, created_at')
+      .select('id, email, display_name, terms_accepted_at, line_user_id, created_at')
       .eq('advisor_id', session.userId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
@@ -50,6 +51,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         email: row.email,
         displayName: row.display_name,
         onboarded: !!row.terms_accepted_at,
+        lineLinked: !!row.line_user_id,
         invitedAt: row.created_at,
         policySharingEnabled: consentByCustomer.has(row.id),
         policySharingGrantedAt: consentByCustomer.get(row.id) ?? null,
