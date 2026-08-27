@@ -5,6 +5,7 @@ import { requireAdvisorSession } from '../../_lib/session.js'
 import { writeAuditLog } from '../../_lib/audit.js'
 import { createSupabaseAdminClient } from '../../_lib/supabaseServer.js'
 import { pushLineText } from '../../_lib/lineMessaging.js'
+import { recordLineNotificationDelivery } from '../../_lib/lineNotificationDelivery.js'
 
 const updateSchema = z.discriminatedUnion('status', [
   z.object({ id: z.string().uuid(), status: z.literal('confirmed'), selectedChoice: z.enum(['first', 'second']) }).strict(),
@@ -124,7 +125,15 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       const notification = input.status === 'confirmed'
         ? `相談日時が確定しました。\n\n${formatLineDate(values.confirmed_start_at as string)}\n\nアプリで確認できます。\n${new URL('/line?next=consultation', process.env.ALLOWED_ORIGIN).toString()}`
         : `担当者が相談日時の申込みを取り消しました。必要に応じて担当者へご連絡ください。\n${new URL('/line?next=consultation', process.env.ALLOWED_ORIGIN).toString()}`
-      await pushLineText(customer?.line_user_id, notification)
+      const pushResult = await pushLineText(customer?.line_user_id, notification)
+      await recordLineNotificationDelivery({
+        appointmentId: current.id,
+        customerUserId: current.customer_user_id,
+        advisorUserId: session.userId,
+        event: input.status === 'confirmed' ? 'advisor_confirmed' : 'advisor_cancelled',
+        recipientRole: 'customer',
+        result: pushResult,
+      })
     }
     sendJson(res, 200, { ok: true })
     return

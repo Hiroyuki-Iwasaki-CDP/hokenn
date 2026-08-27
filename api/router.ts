@@ -5,6 +5,7 @@ import advisorClients from './_handlers/advisor/clients/index.js'
 import advisorClientPolicies from './_handlers/advisor/clients/[id]/policies.js'
 import advisorConsultations from './_handlers/advisor/consultations.js'
 import advisorAppointments from './_handlers/advisor/appointments.js'
+import advisorLineNotifications from './_handlers/advisor/line-notifications.js'
 import lineCallback from './_handlers/auth/line/callback.js'
 import lineStart from './_handlers/auth/line/start.js'
 import lineStatus from './_handlers/auth/line/status.js'
@@ -33,6 +34,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/advisor/clients': advisorClients,
   '/api/advisor/consultations': advisorConsultations,
   '/api/advisor/appointments': advisorAppointments,
+  '/api/advisor/line-notifications': advisorLineNotifications,
   '/api/auth/line/callback': lineCallback,
   '/api/auth/line/start': lineStart,
   '/api/auth/line/status': lineStatus,

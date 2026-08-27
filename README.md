@@ -48,6 +48,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - `rate_limit_events` — 認証コードの送信回数・試行回数の制限用。メールアドレス/IPはハッシュ化して記録する運用専用テーブル(顧客データではない)
 - `policy_sharing_consents` — 契約者が現在の担当FPへ全保険情報の閲覧を許可した同意記録。初期状態は未共有で、解除履歴も保持する
 - `users.line_user_id` — 同一Provider内のLINE LoginとMessaging APIで共通するLINEユーザー識別子。LINEのトークンはDBへ保存しない
+- `line_notification_deliveries` — 相談LINE通知の配送結果。通知本文やLINEユーザーIDは保存せず、送信成否だけを担当者が確認する
 
 全テーブルでRow Level Securityを有効化し、`insurance_policies` / `advisor_profiles` は `owner_user_id = auth.uid()` の行のみ操作可能です。`owner_user_id` はクライアントの送信値を一切信用せず、常にサーバーが認証セッションから確定させます。
 

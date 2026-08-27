@@ -1,7 +1,12 @@
 import { requireEnv } from './env.js'
 
-export async function pushLineText(lineUserId: string | null | undefined, text: string): Promise<boolean> {
-  if (!lineUserId || !/^U[0-9a-f]{32}$/.test(lineUserId)) return false
+export type LinePushResult =
+  | { status: 'sent'; responseStatus: null }
+  | { status: 'not_linked'; responseStatus: null }
+  | { status: 'failed'; responseStatus: number | null }
+
+export async function pushLineText(lineUserId: string | null | undefined, text: string): Promise<LinePushResult> {
+  if (!lineUserId || !/^U[0-9a-f]{32}$/.test(lineUserId)) return { status: 'not_linked', responseStatus: null }
 
   try {
     const response = await fetch('https://api.line.me/v2/bot/message/push', {
@@ -13,10 +18,13 @@ export async function pushLineText(lineUserId: string | null | undefined, text: 
       },
       body: JSON.stringify({ to: lineUserId, messages: [{ type: 'text', text }] }),
     })
-    if (!response.ok) console.warn('[line-notification] push failed', { status: response.status })
-    return response.ok
+    if (!response.ok) {
+      console.warn('[line-notification] push failed', { status: response.status })
+      return { status: 'failed', responseStatus: response.status }
+    }
+    return { status: 'sent', responseStatus: null }
   } catch {
     console.warn('[line-notification] push failed')
-    return false
+    return { status: 'failed', responseStatus: null }
   }
 }

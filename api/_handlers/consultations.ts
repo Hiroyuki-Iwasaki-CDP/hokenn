@@ -5,6 +5,7 @@ import { requireSessionUser } from '../_lib/session.js'
 import { writeAuditLog } from '../_lib/audit.js'
 import { createSupabaseAdminClient } from '../_lib/supabaseServer.js'
 import { pushLineText } from '../_lib/lineMessaging.js'
+import { recordLineNotificationDelivery } from '../_lib/lineNotificationDelivery.js'
 
 const topicSchema = z.enum(['review', 'renewal', 'family', 'premium', 'other'])
 const createSchema = z.object({
@@ -99,10 +100,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const admin = createSupabaseAdminClient()
     const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', customer.advisor_id).maybeSingle()
-    await pushLineText(
+    const pushResult = await pushLineText(
       advisor?.line_user_id,
       `${customer.display_name || '契約者'}さんから相談日時の候補が届きました。\n\n担当者画面で内容を確認してください。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`,
     )
+    await recordLineNotificationDelivery({ appointmentId: String(data.id), customerUserId: session.userId, advisorUserId: customer.advisor_id, event: 'appointment_requested', recipientRole: 'advisor', result: pushResult })
     sendJson(res, 201, { appointment: toResponse(data) })
     return
   }
@@ -125,7 +127,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       await writeAuditLog(session.supabase, session.userId, 'consultation_appointment_rescheduled', 'advisor', data.advisor_user_id)
       const admin = createSupabaseAdminClient()
       const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', data.advisor_user_id).maybeSingle()
-      await pushLineText(advisor?.line_user_id, `${customer.display_name || '契約者'}さんが相談日時の候補を変更しました。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`)
+      const pushResult = await pushLineText(advisor?.line_user_id, `${customer.display_name || '契約者'}さんが相談日時の候補を変更しました。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`)
+      await recordLineNotificationDelivery({ appointmentId: data.id, customerUserId: session.userId, advisorUserId: data.advisor_user_id, event: 'appointment_rescheduled', recipientRole: 'advisor', result: pushResult })
       sendJson(res, 200, { ok: true })
       return
     }
@@ -145,10 +148,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const admin = createSupabaseAdminClient()
     const { data: advisor } = await admin.from('users').select('line_user_id').eq('id', data.advisor_user_id).maybeSingle()
-    await pushLineText(
+    const pushResult = await pushLineText(
       advisor?.line_user_id,
       `${customer.display_name || '契約者'}さんが相談日時の申込みを取り消しました。\n${new URL('/advisor', process.env.ALLOWED_ORIGIN).toString()}`,
     )
+    await recordLineNotificationDelivery({ appointmentId: data.id, customerUserId: session.userId, advisorUserId: data.advisor_user_id, event: 'customer_cancelled', recipientRole: 'advisor', result: pushResult })
     sendJson(res, 200, { ok: true })
     return
   }

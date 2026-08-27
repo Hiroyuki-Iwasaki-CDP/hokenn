@@ -191,6 +191,21 @@ export interface AdvisorAppointment extends ConsultationAppointment {
   displayName: string | null
 }
 
+export type LineNotificationEvent = 'appointment_requested' | 'appointment_rescheduled' | 'customer_cancelled' | 'advisor_confirmed' | 'advisor_cancelled'
+export type LineNotificationDeliveryStatus = 'failed' | 'not_linked'
+
+export interface LineNotificationDelivery {
+  id: string
+  customerId: string
+  customerName: string | null
+  customerEmail: string
+  event: LineNotificationEvent
+  recipientRole: 'customer' | 'advisor'
+  status: LineNotificationDeliveryStatus
+  responseStatus: number | null
+  attemptedAt: string
+}
+
 export interface AuditLogEntry {
   id: string
   action: string

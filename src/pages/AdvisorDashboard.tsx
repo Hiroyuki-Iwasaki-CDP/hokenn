@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BellRing, CalendarClock, CalendarPlus, CheckCircle2, Eye, Link2, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
+import { AlertTriangle, BellRing, CalendarClock, CalendarPlus, CheckCircle2, Eye, Link2, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 import { downloadConsultationCalendar } from '../lib/calendar'
-import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic } from '../types/insurance'
+import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic, LineNotificationDelivery, LineNotificationEvent } from '../types/insurance'
 
 const OFFICIAL_LINE_CHAT_URL = 'https://chat.line.biz/account/@615aecnm'
 
@@ -21,6 +21,14 @@ const TOPIC_LABELS: Record<ConsultationTopic, string> = {
   family: '家族構成の変化',
   premium: '保険料の負担確認',
   other: 'その他の相談',
+}
+
+const LINE_EVENT_LABELS: Record<LineNotificationEvent, string> = {
+  appointment_requested: '相談日時の申込み',
+  appointment_rescheduled: '相談日時の変更',
+  customer_cancelled: '契約者による取消',
+  advisor_confirmed: '相談日時の確定',
+  advisor_cancelled: '担当者による取消',
 }
 
 function formatAppointmentDate(value: string): string {
@@ -73,6 +81,11 @@ export default function AdvisorDashboard() {
   const [appointmentError, setAppointmentError] = useState<string | null>(null)
   const [lineConnection, setLineConnection] = useState<LineConnectionStatus | null>(null)
   const [lineError, setLineError] = useState<string | null>(null)
+  const [lineNotifications, setLineNotifications] = useState<LineNotificationDelivery[]>([])
+  const [lineSentLast30Days, setLineSentLast30Days] = useState(0)
+  const [lineNotificationsLoading, setLineNotificationsLoading] = useState(true)
+  const [lineNotificationError, setLineNotificationError] = useState<string | null>(null)
+  const [lineNotificationSavingId, setLineNotificationSavingId] = useState<string | null>(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
@@ -123,12 +136,25 @@ export default function AdvisorDashboard() {
       .finally(() => setAppointmentsLoading(false))
   }
 
+  const loadLineNotifications = (silent = false) => {
+    if (!silent) setLineNotificationsLoading(true)
+    if (!silent) setLineNotificationError(null)
+    api.get<{ sentLast30Days: number; unresolved: LineNotificationDelivery[] }>('/api/advisor/line-notifications')
+      .then((data) => {
+        setLineSentLast30Days(data.sentLast30Days)
+        setLineNotifications(data.unresolved)
+      })
+      .catch((err) => setLineNotificationError(err instanceof ApiError ? err.message : 'LINE通知履歴を読み込めませんでした。'))
+      .finally(() => setLineNotificationsLoading(false))
+  }
+
   useEffect(() => {
     const search = new URLSearchParams(window.location.search)
     if (search.get('line') === 'error') setLineError('LINEを連携できませんでした。別のアカウントと連携済みでないか確認してください。')
     loadClients()
     loadConsultations()
     loadAppointments()
+    loadLineNotifications()
     api.get<LineConnectionStatus>('/api/auth/line/status')
       .then(setLineConnection)
       .catch((err) => setLineError(err instanceof ApiError ? err.message : 'LINE連携状態を確認できませんでした。'))
@@ -153,9 +179,24 @@ export default function AdvisorDashboard() {
     const refreshTimer = window.setInterval(() => {
       loadConsultations(true)
       loadAppointments(true)
+      loadLineNotifications(true)
     }, 60_000)
     return () => window.clearInterval(refreshTimer)
   }, [])
+
+  const acknowledgeLineNotification = async (id: string) => {
+    if (lineNotificationSavingId) return
+    setLineNotificationSavingId(id)
+    setLineNotificationError(null)
+    try {
+      await api.patch('/api/advisor/line-notifications', { id })
+      setLineNotifications((current) => current.filter((item) => item.id !== id))
+    } catch (err) {
+      setLineNotificationError(err instanceof ApiError ? err.message : '通知履歴を更新できませんでした。')
+    } finally {
+      setLineNotificationSavingId(null)
+    }
+  }
 
   const handleResolveConsultation = async (id: string) => {
     if (consultationSavingId) return
@@ -250,6 +291,31 @@ export default function AdvisorDashboard() {
             <a href="/api/auth/line/start?flow=link&next=advisor" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d]"><Link2 size={16} />LINEを連携する</a>
           )}
         </div>
+        {!lineNotificationsLoading && (
+          <div className="mt-4 border-t border-line pt-4">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full bg-brand-50 px-2.5 py-1 font-bold text-brand-800">直近30日 送信成功 {lineSentLast30Days}件</span>
+              {lineNotifications.length > 0 && <span className="rounded-full bg-red-50 px-2.5 py-1 font-bold text-red-700">要確認 {lineNotifications.length}件</span>}
+            </div>
+            {lineNotifications.length > 0 && (
+              <ul className="mt-3 divide-y divide-red-100 rounded-xl border border-red-200 bg-red-50 px-4">
+                {lineNotifications.map((item) => (
+                  <li key={item.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-2">
+                      <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-600" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-red-800">{LINE_EVENT_LABELS[item.event]}を送信できませんでした</p>
+                        <p className="mt-0.5 text-[11px] text-red-700">{item.customerName ?? item.customerEmail}・{item.recipientRole === 'advisor' ? '担当者' : '契約者'}のLINE{item.status === 'not_linked' ? 'が未連携です' : 'への送信に失敗しました'}・{new Date(item.attemptedAt).toLocaleString('ja-JP')}</p>
+                      </div>
+                    </div>
+                    <button type="button" disabled={lineNotificationSavingId === item.id} onClick={() => void acknowledgeLineNotification(item.id)} className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[11px] font-bold text-red-700 disabled:opacity-50">{lineNotificationSavingId === item.id ? '更新中…' : '確認済みにする'}</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {lineNotificationError && <p className="mt-2 text-xs font-semibold text-red-600">{lineNotificationError}</p>}
       </section>
 
       <section className="rounded-2xl border border-line bg-white p-5 sm:p-6">
