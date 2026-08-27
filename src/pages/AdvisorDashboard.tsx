@@ -87,6 +87,7 @@ export default function AdvisorDashboard() {
   const [lineSentLast30Days, setLineSentLast30Days] = useState(0)
   const [lineNotificationsLoading, setLineNotificationsLoading] = useState(true)
   const [lineNotificationError, setLineNotificationError] = useState<string | null>(null)
+  const [lineNotificationMessage, setLineNotificationMessage] = useState<string | null>(null)
   const [lineNotificationSavingId, setLineNotificationSavingId] = useState<string | null>(null)
 
   const [inviteEmail, setInviteEmail] = useState('')
@@ -199,6 +200,23 @@ export default function AdvisorDashboard() {
       setLineNotificationError(err instanceof ApiError ? err.message : '通知履歴を更新できませんでした。')
     } finally {
       setLineNotificationSavingId(null)
+    }
+  }
+
+  const retryLineNotification = async (id: string) => {
+    if (lineNotificationSavingId) return
+    if (!window.confirm('このLINE通知を同じ宛先へ再送しますか？')) return
+    setLineNotificationSavingId(id)
+    setLineNotificationError(null)
+    setLineNotificationMessage(null)
+    try {
+      await api.post('/api/advisor/line-notifications', { id })
+      setLineNotificationMessage('LINE通知を再送しました。')
+    } catch (err) {
+      setLineNotificationError(err instanceof ApiError ? err.message : 'LINE通知を再送できませんでした。')
+    } finally {
+      setLineNotificationSavingId(null)
+      loadLineNotifications(true)
     }
   }
 
@@ -331,13 +349,17 @@ export default function AdvisorDashboard() {
                         <p className="mt-0.5 text-[11px] text-red-700">{item.customerName ?? item.customerEmail}・{item.recipientRole === 'advisor' ? '担当者' : '契約者'}のLINE{item.status === 'not_linked' ? 'が未連携です' : 'への送信に失敗しました'}・{new Date(item.attemptedAt).toLocaleString('ja-JP')}</p>
                       </div>
                     </div>
-                    <button type="button" disabled={lineNotificationSavingId === item.id} onClick={() => void acknowledgeLineNotification(item.id)} className="shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[11px] font-bold text-red-700 disabled:opacity-50">{lineNotificationSavingId === item.id ? '更新中…' : '確認済みにする'}</button>
+                    <div className="flex shrink-0 gap-2">
+                      <button type="button" disabled={lineNotificationSavingId !== null} onClick={() => void retryLineNotification(item.id)} className="rounded-lg bg-[#06C755] px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50">{lineNotificationSavingId === item.id ? '処理中…' : '再送する'}</button>
+                      <button type="button" disabled={lineNotificationSavingId !== null} onClick={() => void acknowledgeLineNotification(item.id)} className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[11px] font-bold text-red-700 disabled:opacity-50">確認済みにする</button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
         )}
+        {lineNotificationMessage && <p className="mt-2 text-xs font-semibold text-brand-700">{lineNotificationMessage}</p>}
         {lineNotificationError && <p className="mt-2 text-xs font-semibold text-red-600">{lineNotificationError}</p>}
       </section>
 

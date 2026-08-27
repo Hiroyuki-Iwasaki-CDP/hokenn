@@ -16,7 +16,7 @@ export async function recordLineNotificationDelivery(input: {
   event: LineNotificationEvent
   recipientRole: 'customer' | 'advisor'
   result: LinePushResult
-}): Promise<void> {
+}): Promise<boolean> {
   const admin = createSupabaseAdminClient()
   const { error } = await admin.from('line_notification_deliveries').insert({
     appointment_id: input.appointmentId,
@@ -27,5 +27,9 @@ export async function recordLineNotificationDelivery(input: {
     status: input.result.status,
     response_status: input.result.responseStatus,
   })
-  if (error) console.error('[line-notification] failed to record delivery result', { event: input.event })
+  if (error) {
+    console.error('[line-notification] failed to record delivery result', { event: input.event })
+    return false
+  }
+  return true
 }
