@@ -45,6 +45,10 @@ export const inviteClientSchema = z.object({
   email: emailSchema,
 })
 
+export const revokeClientInvitationSchema = z.object({
+  id: z.string().uuid('招待情報が正しくありません。'),
+})
+
 export const acceptInvitationSchema = z.object({
   token: z
     .string()

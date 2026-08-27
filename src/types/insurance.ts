@@ -162,6 +162,14 @@ export interface AdvisorClient {
   policySharingGrantedAt: string | null
 }
 
+export interface PendingClientInvitation {
+  id: string
+  email: string
+  invitationType: 'registration' | 'transfer'
+  expiresAt: string
+  createdAt: string
+}
+
 export interface AdvisorConsultation {
   id: string
   customerId: string

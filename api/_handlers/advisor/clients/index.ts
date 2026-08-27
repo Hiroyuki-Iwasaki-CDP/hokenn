@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { assertTrustedOrigin, HttpError, methodNotAllowed, readJsonBody, sendJson, withErrorHandling } from '../../../_lib/http.js'
 import { requireAdvisorSession } from '../../../_lib/session.js'
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '../../../_lib/supabaseServer.js'
-import { inviteClientSchema } from '../../../_lib/validation.js'
+import { inviteClientSchema, revokeClientInvitationSchema } from '../../../_lib/validation.js'
 import { writeAuditLog } from '../../../_lib/audit.js'
 import { requireEnv } from '../../../_lib/env.js'
 
@@ -45,6 +45,19 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       (consents ?? []).map((consent) => [consent.customer_user_id, consent.granted_at] as const),
     )
 
+    // 招待トークン自体は返さず、自分が送った有効な承認待ち招待の最小情報だけを返す。
+    const admin = createSupabaseAdminClient()
+    const { data: pendingInvitations, error: invitationError } = await admin
+      .from('customer_invitations')
+      .select('id, email, invitation_kind, expires_at, created_at')
+      .eq('advisor_user_id', session.userId)
+      .is('accepted_at', null)
+      .is('revoked_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (invitationError) throw new HttpError(500, '招待状況を確認できませんでした。')
+
     sendJson(res, 200, {
       clients: (data ?? []).map((row) => ({
         id: row.id,
@@ -55,6 +68,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         invitedAt: row.created_at,
         policySharingEnabled: consentByCustomer.has(row.id),
         policySharingGrantedAt: consentByCustomer.get(row.id) ?? null,
+      })),
+      pendingInvitations: (pendingInvitations ?? []).map((invitation) => ({
+        id: invitation.id,
+        email: invitation.email,
+        invitationType: invitation.invitation_kind,
+        expiresAt: invitation.expires_at,
+        createdAt: invitation.created_at,
       })),
     })
     return
@@ -105,6 +125,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (invitationError || !invitation) throw new HttpError(500, '招待リンクを作成できませんでした。')
 
     let targetUserId: string
+    let createdByInvitation = false
     if (existing) {
       targetUserId = existing.id
     } else {
@@ -116,13 +137,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         throw new HttpError(500, '招待の処理に失敗しました。しばらくしてから再度お試しください。')
       }
       targetUserId = created.user.id
+      createdByInvitation = true
     }
 
-    // 担当変更では既存行を一切更新しない。新規・未担当顧客だけ従来どおり紐づける。
-    if (!isTransfer) {
+    // 新規ユーザーの公開プロフィール行だけ用意する。担当FPは本人が招待を承認した時に設定する。
+    if (createdByInvitation) {
       const { error: upsertError } = await admin
         .from('users')
-        .upsert({ id: targetUserId, email: input.email, advisor_id: session.userId }, { onConflict: 'id' })
+        .upsert({ id: targetUserId, email: input.email, invitation_provisioned: true }, { onConflict: 'id' })
 
       if (upsertError) {
         await admin.from('customer_invitations').update({ revoked_at: new Date().toISOString() }).eq('id', invitation.id)
@@ -180,7 +202,52 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  methodNotAllowed(res, ['GET', 'POST'])
+  if (req.method === 'DELETE') {
+    assertTrustedOrigin(req)
+    const input = revokeClientInvitationSchema.parse(await readJsonBody(req))
+    const admin = createSupabaseAdminClient()
+    const { data, error } = await admin
+      .from('customer_invitations')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('id', input.id)
+      .eq('advisor_user_id', session.userId)
+      .is('accepted_at', null)
+      .is('revoked_at', null)
+      .select('id, customer_user_id')
+      .maybeSingle()
+
+    if (error) throw new HttpError(500, '招待を取り消せませんでした。')
+    if (!data) throw new HttpError(404, 'この招待はすでに承認済みか、取り消されています。')
+
+    // アプリ招待が作成した未利用アカウントで、有効な別招待も無い場合だけ認証アカウントごと削除する。
+    // 手動作成・既存顧客・利用開始済み顧客は絶対に削除しない。
+    if (data.customer_user_id) {
+      const [{ data: customer }, { count: otherActiveInvitations }] = await Promise.all([
+        admin
+          .from('users')
+          .select('invitation_provisioned, terms_accepted_at')
+          .eq('id', data.customer_user_id)
+          .maybeSingle(),
+        admin
+          .from('customer_invitations')
+          .select('id', { count: 'exact', head: true })
+          .eq('customer_user_id', data.customer_user_id)
+          .is('accepted_at', null)
+          .is('revoked_at', null)
+          .gt('expires_at', new Date().toISOString()),
+      ])
+      if (customer?.invitation_provisioned && !customer.terms_accepted_at && (otherActiveInvitations ?? 0) === 0) {
+        const { error: deleteError } = await admin.auth.admin.deleteUser(data.customer_user_id)
+        if (deleteError) throw new HttpError(500, '招待は無効化しましたが、仮アカウントを削除できませんでした。運営へご連絡ください。')
+      }
+    }
+
+    await writeAuditLog(session.supabase, session.userId, 'revoke_client_invitation', 'invitation', input.id)
+    sendJson(res, 200, { ok: true })
+    return
+  }
+
+  methodNotAllowed(res, ['GET', 'POST', 'DELETE'])
 }
 
 export default withErrorHandling(handler)

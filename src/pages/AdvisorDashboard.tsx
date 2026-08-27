@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, BellRing, CalendarClock, CalendarPlus, CheckCircle2, Eye, Link2, LockKeyhole, Mail, MessageCircle, UserPlus, Users } from 'lucide-react'
+import { AlertTriangle, BellRing, CalendarClock, CalendarPlus, CheckCircle2, Eye, Link2, LockKeyhole, Mail, MessageCircle, UserPlus, Users, XCircle } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import SensitiveInfoNotice from '../components/common/SensitiveInfoNotice'
 import { downloadConsultationCalendar } from '../lib/calendar'
-import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic, LineNotificationDelivery, LineNotificationEvent } from '../types/insurance'
+import type { AdvisorAppointment, AdvisorClient, AdvisorConsultation, AdvisorProfile, ConsultationTopic, LineNotificationDelivery, LineNotificationEvent, PendingClientInvitation } from '../types/insurance'
 
 const OFFICIAL_LINE_CHAT_URL = 'https://chat.line.biz/account/@615aecnm'
 
@@ -70,7 +70,9 @@ function TextInput({
 
 export default function AdvisorDashboard() {
   const [clients, setClients] = useState<AdvisorClient[]>([])
+  const [pendingInvitations, setPendingInvitations] = useState<PendingClientInvitation[]>([])
   const [clientsLoading, setClientsLoading] = useState(true)
+  const [invitationSavingId, setInvitationSavingId] = useState<string | null>(null)
   const [consultations, setConsultations] = useState<AdvisorConsultation[]>([])
   const [consultationsLoading, setConsultationsLoading] = useState(true)
   const [consultationSavingId, setConsultationSavingId] = useState<string | null>(null)
@@ -115,8 +117,12 @@ export default function AdvisorDashboard() {
   const loadClients = () => {
     setClientsLoading(true)
     api
-      .get<{ clients: AdvisorClient[] }>('/api/advisor/clients')
-      .then((data) => setClients(data.clients))
+      .get<{ clients: AdvisorClient[]; pendingInvitations: PendingClientInvitation[] }>('/api/advisor/clients')
+      .then((data) => {
+        setClients(data.clients)
+        setPendingInvitations(data.pendingInvitations)
+      })
+      .catch((err) => setInviteError(err instanceof ApiError ? err.message : '顧客情報を読み込めませんでした。'))
       .finally(() => setClientsLoading(false))
   }
 
@@ -287,6 +293,23 @@ export default function AdvisorDashboard() {
       setInviteError(err instanceof ApiError ? err.message : 'エラーが発生しました。')
     } finally {
       setInviting(false)
+    }
+  }
+
+  const revokeInvitation = async (invitation: PendingClientInvitation) => {
+    if (invitationSavingId) return
+    if (!window.confirm(`${invitation.email}への招待を取り消しますか？メール内のリンクは使えなくなります。`)) return
+    setInvitationSavingId(invitation.id)
+    setInviteMessage(null)
+    setInviteError(null)
+    try {
+      await api.del('/api/advisor/clients', { id: invitation.id })
+      setPendingInvitations((current) => current.filter((item) => item.id !== invitation.id))
+      setInviteMessage('招待を取り消しました。')
+    } catch (err) {
+      setInviteError(err instanceof ApiError ? err.message : '招待を取り消せませんでした。')
+    } finally {
+      setInvitationSavingId(null)
     }
   }
 
@@ -514,6 +537,34 @@ export default function AdvisorDashboard() {
         </form>
         {inviteMessage && <p className="mt-2 text-xs font-semibold text-brand-700">{inviteMessage}</p>}
         {inviteError && <p className="mt-2 text-xs font-semibold text-red-600">{inviteError}</p>}
+        {!clientsLoading && pendingInvitations.length > 0 && (
+          <div className="mt-5 border-t border-line pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold text-ink">承認待ちの招待</h3>
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">{pendingInvitations.length}件</span>
+            </div>
+            <ul className="mt-2 divide-y divide-line rounded-xl border border-line px-4">
+              {pendingInvitations.map((invitation) => (
+                <li key={invitation.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-ink">{invitation.email}</p>
+                    <p className="mt-0.5 text-[11px] text-ink-muted">
+                      {invitation.invitationType === 'transfer' ? '担当FP変更' : '新規登録'}・期限 {new Date(invitation.expiresAt).toLocaleString('ja-JP')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={invitationSavingId !== null}
+                    onClick={() => void revokeInvitation(invitation)}
+                    className="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <XCircle size={14} />{invitationSavingId === invitation.id ? '取消中…' : '招待を取り消す'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">

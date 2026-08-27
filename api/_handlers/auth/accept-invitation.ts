@@ -102,7 +102,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const isTransfer = invitation.invitation_kind === 'transfer'
   if (
     (isTransfer && (!invitation.previous_advisor_user_id || userRow.advisor_id !== invitation.previous_advisor_user_id)) ||
-    (!isTransfer && userRow.advisor_id !== invitation.advisor_user_id)
+    (!isTransfer && userRow.advisor_id !== null && userRow.advisor_id !== invitation.advisor_user_id)
   ) {
     await releaseInvitation()
     throw new HttpError(409, '担当者の状態が招待時から変わっています。代理店へ再招待をご依頼ください。')
@@ -142,6 +142,16 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       await authClient.auth.signOut()
       await releaseInvitation()
       throw new HttpError(409, '担当者を変更できませんでした。代理店へ再招待をご依頼ください。')
+    }
+  } else if (userRow.advisor_id === null) {
+    const { data: assigned, error: assignmentError } = await admin.rpc('assign_customer_advisor', {
+      customer_uid: invitation.customer_user_id,
+      new_advisor_uid: invitation.advisor_user_id,
+    })
+    if (assignmentError || assigned !== true) {
+      await authClient.auth.signOut()
+      await releaseInvitation()
+      throw new HttpError(409, '担当者を設定できませんでした。代理店へ再招待をご依頼ください。')
     }
   }
 
