@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Download, History, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
+import { AlertTriangle, BellRing, CheckCircle2, Download, History, Link2, ShieldCheck, User, Users as UsersIcon } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 import { downloadPoliciesCsv } from '../lib/policyExport'
 import { useAuth } from '../store/AuthContext'
@@ -41,6 +41,11 @@ interface LineConnectionStatus {
   linkedAt: string | null
 }
 
+interface LineNotificationPreferences {
+  policyMilestoneReminders: boolean
+  appointmentReminders: boolean
+}
+
 const LINE_ERROR_MESSAGES: Record<string, string> = {
   invalid_request: 'LINEから戻った情報を確認できませんでした。もう一度お試しください。',
   token_exchange_failed: 'LINEの認証を完了できませんでした。もう一度お試しください。',
@@ -65,6 +70,9 @@ export default function Settings() {
   const [lineTesting, setLineTesting] = useState(false)
   const [lineMessage, setLineMessage] = useState<string | null>(null)
   const [lineError, setLineError] = useState<string | null>(null)
+  const [linePreferences, setLinePreferences] = useState<LineNotificationPreferences | null>(null)
+  const [linePreferencesLoading, setLinePreferencesLoading] = useState(true)
+  const [linePreferencesSaving, setLinePreferencesSaving] = useState(false)
 
   const [advisor, setAdvisor] = useState<AdvisorProfile | null>(null)
   const [managedByAdvisorAccount, setManagedByAdvisorAccount] = useState(false)
@@ -97,6 +105,12 @@ export default function Settings() {
       .then(setLineConnection)
       .catch((err) => setLineError(err instanceof ApiError ? err.message : 'LINE連携状態を確認できませんでした。'))
       .finally(() => setLineLoading(false))
+
+    api
+      .get<LineNotificationPreferences>('/api/line-preferences')
+      .then(setLinePreferences)
+      .catch((err) => setLineError(err instanceof ApiError ? err.message : 'LINE通知設定を読み込めませんでした。'))
+      .finally(() => setLinePreferencesLoading(false))
 
     api
       .get<{ advisor: AdvisorProfile | null; managedByAdvisorAccount: boolean }>('/api/my-advisor')
@@ -139,11 +153,27 @@ export default function Settings() {
       setLineConnection((current) =>
         current ? { ...current, linked: false, displayName: null, linkedAt: null } : current,
       )
+      setLinePreferences({ policyMilestoneReminders: false, appointmentReminders: false })
       setLineMessage('アプリとのLINE連携を解除しました。')
     } catch (err) {
       setLineError(err instanceof ApiError ? err.message : 'LINE連携を解除できませんでした。')
     } finally {
       setLineSaving(false)
+    }
+  }
+
+  const handleLinePreferencesSave = async () => {
+    if (!linePreferences || linePreferencesSaving) return
+    setLinePreferencesSaving(true)
+    setLineMessage(null)
+    setLineError(null)
+    try {
+      await api.put<{ ok: true }>('/api/line-preferences', linePreferences)
+      setLineMessage('LINEリマインド設定を保存しました。')
+    } catch (err) {
+      setLineError(err instanceof ApiError ? err.message : 'LINEリマインド設定を保存できませんでした。')
+    } finally {
+      setLinePreferencesSaving(false)
     }
   }
 
@@ -307,6 +337,14 @@ export default function Settings() {
                 {lineSaving ? '解除しています…' : 'アプリとの連携を解除する'}
               </button>
             </div>
+            {!linePreferencesLoading && linePreferences && (
+              <div className="space-y-3 rounded-xl border border-line bg-plane px-4 py-4">
+                <div><p className="flex items-center gap-1.5 text-sm font-bold text-ink"><BellRing size={15} />LINEリマインド</p><p className="mt-1 text-[11px] leading-relaxed text-ink-muted">必要な通知だけを選べます。初期状態はすべてOFFです。</p></div>
+                <label className="flex items-start gap-2.5 text-sm text-ink-secondary"><input type="checkbox" checked={linePreferences.policyMilestoneReminders} onChange={(event) => setLinePreferences({ ...linePreferences, policyMilestoneReminders: event.target.checked })} className="mt-0.5 h-4 w-4 rounded border-line text-brand-700" /><span><strong className="block text-ink">更新・満期の30日前</strong><span className="text-xs">商品名と更新・満期の予定を通知します。金額や証券番号はLINEへ送りません。</span></span></label>
+                <label className="flex items-start gap-2.5 text-sm text-ink-secondary"><input type="checkbox" checked={linePreferences.appointmentReminders} onChange={(event) => setLinePreferences({ ...linePreferences, appointmentReminders: event.target.checked })} className="mt-0.5 h-4 w-4 rounded border-line text-brand-700" /><span><strong className="block text-ink">確定した相談の前日</strong><span className="text-xs">相談日時だけを前日に通知します。</span></span></label>
+                <button type="button" onClick={() => void handleLinePreferencesSave()} disabled={linePreferencesSaving} className="rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-bold text-brand-800 disabled:opacity-50">{linePreferencesSaving ? '保存しています…' : 'リマインド設定を保存'}</button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

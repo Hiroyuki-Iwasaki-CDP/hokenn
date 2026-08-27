@@ -33,6 +33,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       .update({ line_user_id: null, line_display_name: null, line_linked_at: null })
       .eq('id', session.userId)
     if (error) throw new HttpError(500, 'LINE連携を解除できませんでした。')
+    await session.supabase
+      .from('line_notification_preferences')
+      .update({ policy_milestone_reminders: false, appointment_reminders: false })
+      .eq('user_id', session.userId)
 
     await writeAuditLog(session.supabase, session.userId, 'line_unlink', 'user')
     sendJson(res, 200, { ok: true })

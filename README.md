@@ -14,6 +14,7 @@
 - 保障を比べる: 同じ対象者・同じ分野の契約の月額保険料を比較表示(中立的な事実提示のみ)
 - メールアドレスの認証コードによるログイン(招待制)
 - 既存の契約者アカウントとLINEアカウントの安全な連携（OAuth 2.1 / OpenID Connect / PKCE）
+- 契約者が明示的にONにした場合だけ、更新・満期30日前と確定相談前日にLINEリマインドを送信
 - 左メニューに担当FPの連絡先(公式LINE・電話・メール)を表示
 - 契約者本人による担当代理店への全保険情報の共有・解除(担当者は閲覧専用)
 
@@ -49,6 +50,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - `policy_sharing_consents` — 契約者が現在の担当FPへ全保険情報の閲覧を許可した同意記録。初期状態は未共有で、解除履歴も保持する
 - `users.line_user_id` — 同一Provider内のLINE LoginとMessaging APIで共通するLINEユーザー識別子。LINEのトークンはDBへ保存しない
 - `line_notification_deliveries` — 相談LINE通知の配送結果。通知本文やLINEユーザーIDは保存せず、送信成否だけを担当者が確認する
+- `line_notification_preferences` / `line_reminder_deliveries` — 契約者のリマインド同意設定と重複送信防止用の配送結果。通知本文やLINEユーザーIDは保存しない
 
 全テーブルでRow Level Securityを有効化し、`insurance_policies` / `advisor_profiles` は `owner_user_id = auth.uid()` の行のみ操作可能です。`owner_user_id` はクライアントの送信値を一切信用せず、常にサーバーが認証セッションから確定させます。
 
