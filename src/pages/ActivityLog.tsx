@@ -10,7 +10,7 @@ const ACTION_LABELS: Record<string, string> = {
   consultation_appointment_requested: '相談日時を申込み', consultation_appointment_rescheduled: '相談日時候補を変更',
   consultation_appointment_confirmed: '相談日時を確定', consultation_appointment_completed: '相談を完了', consultation_appointment_cancelled: '相談を取消',
   line_consultation_requested: 'LINEから相談を受付', line_consultation_resolved: 'LINE相談を対応済みに変更',
-  product_create: '取扱商品を登録', product_update: '取扱商品を更新', product_delete: '取扱商品の下書きを削除', update_advisor_profile: '担当者プロフィールを更新', line_notification_acknowledged: 'LINE通知の要確認を確認済みに変更',
+  product_create: '取扱商品を登録', product_update: '取扱商品を更新', product_delete: '取扱商品の下書きを削除', update_advisor_profile: '担当者プロフィールを更新', line_notification_acknowledged: 'LINE通知の要確認を確認済みに変更', line_test_notification_sent: 'LINEテスト通知を送信',
 }
 
 function formatDate(value: string): string {

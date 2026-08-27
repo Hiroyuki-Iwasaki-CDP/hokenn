@@ -81,6 +81,8 @@ export default function AdvisorDashboard() {
   const [appointmentError, setAppointmentError] = useState<string | null>(null)
   const [lineConnection, setLineConnection] = useState<LineConnectionStatus | null>(null)
   const [lineError, setLineError] = useState<string | null>(null)
+  const [lineTestMessage, setLineTestMessage] = useState<string | null>(null)
+  const [lineTesting, setLineTesting] = useState(false)
   const [lineNotifications, setLineNotifications] = useState<LineNotificationDelivery[]>([])
   const [lineSentLast30Days, setLineSentLast30Days] = useState(0)
   const [lineNotificationsLoading, setLineNotificationsLoading] = useState(true)
@@ -198,6 +200,21 @@ export default function AdvisorDashboard() {
     }
   }
 
+  const testLineNotification = async () => {
+    if (lineTesting) return
+    setLineTesting(true)
+    setLineError(null)
+    setLineTestMessage(null)
+    try {
+      await api.post<{ ok: true }>('/api/auth/line/status')
+      setLineTestMessage('LINEへテスト通知を送信しました。')
+    } catch (err) {
+      setLineError(err instanceof ApiError ? err.message : 'テスト通知を送信できませんでした。')
+    } finally {
+      setLineTesting(false)
+    }
+  }
+
   const handleResolveConsultation = async (id: string) => {
     if (consultationSavingId) return
     if (!window.confirm('このLINE相談を「対応済み」にしますか？')) return
@@ -287,10 +304,14 @@ export default function AdvisorDashboard() {
             {lineConnection?.linked && <p className="mt-2 text-xs font-bold text-brand-700">連携済み{lineConnection.displayName ? `：${lineConnection.displayName}` : ''}</p>}
             {lineError && <p className="mt-2 text-xs font-semibold text-red-600">{lineError}</p>}
           </div>
+          {lineConnection?.linked && (
+            <button type="button" onClick={() => void testLineNotification()} disabled={lineTesting} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d] disabled:opacity-60"><BellRing size={16} />{lineTesting ? '送信中…' : 'テスト通知を送る'}</button>
+          )}
           {lineConnection && !lineConnection.linked && lineConnection.configured && (
             <a href="/api/auth/line/start?flow=link&next=advisor" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d]"><Link2 size={16} />LINEを連携する</a>
           )}
         </div>
+        {lineTestMessage && <p className="mt-3 text-xs font-semibold text-brand-700">{lineTestMessage}</p>}
         {!lineNotificationsLoading && (
           <div className="mt-4 border-t border-line pt-4">
             <div className="flex flex-wrap items-center gap-2 text-xs">

@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from './supabaseServer.js'
 import { requireEnv } from './env.js'
 import { HttpError } from './http.js'
 
-type RateLimitAction = 'request_code' | 'verify_code'
+type RateLimitAction = 'request_code' | 'verify_code' | 'line_test_notification'
 
 interface RateLimitRule {
   windowSeconds: number
@@ -19,6 +19,10 @@ export const REQUEST_CODE_EMAIL_RULES: RateLimitRule[] = [
 export const REQUEST_CODE_IP_RULES: RateLimitRule[] = [{ windowSeconds: 60 * 60, max: 15 }] // 同一IP 1時間に15回まで
 
 export const VERIFY_CODE_EMAIL_RULES: RateLimitRule[] = [{ windowSeconds: 15 * 60, max: 5 }] // 同一メール 15分に5回まで試行
+export const LINE_TEST_NOTIFICATION_RULES: RateLimitRule[] = [
+  { windowSeconds: 60 * 60, max: 3 },
+  { windowSeconds: 24 * 60 * 60, max: 10 },
+]
 
 function hashSubject(subject: string): string {
   const secret = requireEnv('RATE_LIMIT_HASH_SECRET')

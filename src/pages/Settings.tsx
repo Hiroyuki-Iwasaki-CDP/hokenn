@@ -62,6 +62,7 @@ export default function Settings() {
   const [lineConnection, setLineConnection] = useState<LineConnectionStatus | null>(null)
   const [lineLoading, setLineLoading] = useState(true)
   const [lineSaving, setLineSaving] = useState(false)
+  const [lineTesting, setLineTesting] = useState(false)
   const [lineMessage, setLineMessage] = useState<string | null>(null)
   const [lineError, setLineError] = useState<string | null>(null)
 
@@ -143,6 +144,21 @@ export default function Settings() {
       setLineError(err instanceof ApiError ? err.message : 'LINE連携を解除できませんでした。')
     } finally {
       setLineSaving(false)
+    }
+  }
+
+  const handleLineTest = async () => {
+    if (lineTesting) return
+    setLineTesting(true)
+    setLineMessage(null)
+    setLineError(null)
+    try {
+      await api.post<{ ok: true }>('/api/auth/line/status')
+      setLineMessage('LINEへテスト通知を送信しました。トーク画面をご確認ください。')
+    } catch (err) {
+      setLineError(err instanceof ApiError ? err.message : 'テスト通知を送信できませんでした。')
+    } finally {
+      setLineTesting(false)
     }
   }
 
@@ -280,14 +296,17 @@ export default function Settings() {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleLineUnlink()}
-              disabled={lineSaving}
-              className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-bold text-ink-secondary hover:bg-plane disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {lineSaving ? '解除しています…' : 'アプリとの連携を解除する'}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => void handleLineTest()} disabled={lineTesting || lineSaving} className="rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d] disabled:cursor-not-allowed disabled:opacity-60">{lineTesting ? '送信しています…' : 'テスト通知を送る'}</button>
+              <button
+                type="button"
+                onClick={() => void handleLineUnlink()}
+                disabled={lineSaving || lineTesting}
+                className="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-bold text-ink-secondary hover:bg-plane disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {lineSaving ? '解除しています…' : 'アプリとの連携を解除する'}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
