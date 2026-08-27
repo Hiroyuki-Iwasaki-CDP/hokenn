@@ -1,16 +1,19 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { ArrowLeft, Eye, FileText, ShieldCheck } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ArrowLeft, CalendarDays, Eye, FileText, ListChecks, ShieldCheck, Wallet } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { getCategory } from '../lib/categories'
-import { toAnnualPremium } from '../lib/calculations'
-import { formatDate, formatMoneyWithYen } from '../lib/format'
+import { sortByUpcoming, sumAnnualPremium, sumMonthlyPremiumInYen, toAnnualPremium, toMonthlyPremium } from '../lib/calculations'
+import { formatDate, formatMoneyWithYen, formatUsd, formatYen } from '../lib/format'
 import { CONTRACT_TYPE_LABEL, PREMIUM_FREQUENCY_LABEL, STATUS_META } from '../lib/status'
 import type { InsurancePolicy } from '../types/insurance'
 import CategoryIcon from '../components/common/CategoryIcon'
 import PolicyStatusBadge from '../components/common/PolicyStatusBadge'
 import ExchangeRateNote from '../components/common/ExchangeRateNote'
 import { useExchangeRate } from '../store/ExchangeRateContext'
+import FamilyTabs from '../components/dashboard/FamilyTabs'
+import StatCard from '../components/common/StatCard'
+import { ALL_FAMILY_ID, filterPoliciesByFamily, listInsuredPersons } from '../lib/familyFilter'
 
 interface SharedPoliciesResponse {
   client: {
@@ -47,7 +50,7 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
               </span>
               <PolicyStatusBadge status={policy.status} />
             </div>
-            <h2 className="truncate text-base font-bold text-ink">{policy.productName}</h2>
+            <h2 className="line-clamp-2 break-words text-base font-bold text-ink">{policy.productName}</h2>
             <p className="truncate text-xs text-ink-muted">{policy.insuranceCompany}</p>
           </div>
         </div>
@@ -144,14 +147,60 @@ function SharedPolicy({ policy }: { policy: InsurancePolicy }) {
   )
 }
 
+function ClientOverview({ policies, selectedPerson }: { policies: InsurancePolicy[]; selectedPerson: string }) {
+  const { usdJpy } = useExchangeRate()
+  const filtered = useMemo(() => filterPoliciesByFamily(policies, selectedPerson), [policies, selectedPerson])
+  const active = useMemo(() => filtered.filter((policy) => policy.status === 'active'), [filtered])
+  const dollarPolicies = active.filter((policy) => policy.currency === 'USD')
+  const exchangeRateUnavailable = usdJpy === null && dollarPolicies.length > 0
+  const monthlyTotal = sumMonthlyPremiumInYen(active, usdJpy)
+  const annualTotal = sumAnnualPremium(active, usdJpy)
+  const dollarMonthly = dollarPolicies.reduce((sum, policy) => sum + toMonthlyPremium(policy), 0)
+  const upcoming = sortByUpcoming(active).find((item) => item.days >= 0)
+  const categories = [...new Set(active.map((policy) => getCategory(policy.category).label))]
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="加入中の保険" value={active.length} unit="件" sub={`表示中 ${filtered.length}件`} icon={<ListChecks size={20} />} />
+        <StatCard
+          label={`毎月の保険料${exchangeRateUnavailable ? '（円建て分）' : ''}`}
+          value={formatYen(Math.round(monthlyTotal)).replace('円', '')}
+          unit="円"
+          sub={<span className="space-y-0.5"><span className="block">年間約 {formatYen(Math.round(annualTotal))}</span>{dollarMonthly > 0 && <span className="block font-semibold text-brand-700">{exchangeRateUnavailable ? '別途ドル建て' : 'うちドル建て'} {formatUsd(dollarMonthly)}/月</span>}</span>}
+          icon={<Wallet size={20} />}
+        />
+        <StatCard
+          label="次の更新・満期"
+          value={upcoming ? formatDate(upcoming.date).replace('日', '') : '—'}
+          unit={upcoming ? '日' : ''}
+          sub={upcoming ? `${upcoming.policy.productName}・あと${upcoming.days}日` : '登録された予定はありません'}
+          icon={<CalendarDays size={20} />}
+        />
+      </div>
+      <div className="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <h2 className="text-sm font-bold text-ink">保障分野の構成</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {categories.length > 0 ? categories.map((category) => <span key={category} className="rounded-full bg-plane px-3 py-1.5 text-xs font-bold text-ink-secondary">{category}</span>) : <span className="text-sm text-ink-muted">加入中の保障分野はありません。</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdvisorClientPolicies() {
   const { id } = useParams<{ id: string }>()
   const [data, setData] = useState<SharedPoliciesResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedPerson, setSelectedPerson] = useState<string>(ALL_FAMILY_ID)
+
+  const persons = useMemo(() => listInsuredPersons(data?.policies ?? []), [data])
+  const displayedPolicies = useMemo(() => filterPoliciesByFamily(data?.policies ?? [], selectedPerson), [data, selectedPerson])
 
   useEffect(() => {
     if (!id) return
+    setSelectedPerson(ALL_FAMILY_ID)
     api
       .get<SharedPoliciesResponse>(`/api/advisor/clients/${id}/policies`)
       .then(setData)
@@ -197,9 +246,14 @@ export default function AdvisorClientPolicies() {
               登録されている保険はありません。
             </div>
           ) : (
-            <div className="space-y-4">
-              {data.policies.map((policy) => <SharedPolicy key={policy.id} policy={policy} />)}
-            </div>
+            <>
+              <FamilyTabs persons={persons} value={selectedPerson} onChange={setSelectedPerson} />
+              <ClientOverview policies={data.policies} selectedPerson={selectedPerson} />
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-end justify-between gap-2"><div><h2 className="text-base font-bold text-ink">共有された契約内容</h2><p className="mt-1 text-xs text-ink-muted">契約者本人が登録した内容です。証券原本との照合が必要です。</p></div><span className="text-xs font-semibold text-ink-muted">{displayedPolicies.length}件</span></div>
+                {displayedPolicies.map((policy) => <SharedPolicy key={policy.id} policy={policy} />)}
+              </section>
+            </>
           )}
         </>
       )}
