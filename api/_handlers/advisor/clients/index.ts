@@ -65,15 +65,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     const input = inviteClientSchema.parse(await readJsonBody(req))
     const admin = createSupabaseAdminClient()
 
-    // 既にpublic.usersに存在する場合はそれを再利用し、advisor_idを自分に紐づける。
+    // 既存顧客が別FPに紐づいている場合も招待はできるが、ここでは担当を変更しない。
+    // メールを受け取った契約者本人が承認した時だけ担当変更を実行する。
     const { data: existing } = await admin.from('users').select('id, role, advisor_id').eq('email', input.email).maybeSingle()
 
     if (existing?.role === 'advisor') {
       throw new HttpError(400, 'このメールアドレスは担当者アカウントとして登録されているため招待できません。')
     }
-    if (existing?.advisor_id && existing.advisor_id !== session.userId) {
-      throw new HttpError(409, 'この顧客はすでに別の担当者に紐づいています。ご本人の確認後に担当変更を行ってください。')
-    }
+    const isTransfer = !!existing?.advisor_id && existing.advisor_id !== session.userId
 
     const rawToken = randomBytes(32).toString('base64url')
     const tokenHash = invitationHash(rawToken)
@@ -97,6 +96,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         email: input.email,
         token_hash: tokenHash,
         expires_at: expiresAt,
+        invitation_kind: isTransfer ? 'transfer' : 'registration',
+        previous_advisor_user_id: isTransfer ? existing?.advisor_id : null,
       })
       .select('id')
       .single()
@@ -117,13 +118,16 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       targetUserId = created.user.id
     }
 
-    const { error: upsertError } = await admin
-      .from('users')
-      .upsert({ id: targetUserId, email: input.email, advisor_id: session.userId }, { onConflict: 'id' })
+    // 担当変更では既存行を一切更新しない。新規・未担当顧客だけ従来どおり紐づける。
+    if (!isTransfer) {
+      const { error: upsertError } = await admin
+        .from('users')
+        .upsert({ id: targetUserId, email: input.email, advisor_id: session.userId }, { onConflict: 'id' })
 
-    if (upsertError) {
-      await admin.from('customer_invitations').update({ revoked_at: new Date().toISOString() }).eq('id', invitation.id)
-      throw new HttpError(500, 'サーバーエラーが発生しました。')
+      if (upsertError) {
+        await admin.from('customer_invitations').update({ revoked_at: new Date().toISOString() }).eq('id', invitation.id)
+        throw new HttpError(500, 'サーバーエラーが発生しました。')
+      }
     }
 
     const { error: invitationLinkError } = await admin
@@ -172,7 +176,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await writeAuditLog(session.supabase, session.userId, 'invite_client', 'user', targetUserId)
-    sendJson(res, 201, { ok: true, expiresAt })
+    sendJson(res, 201, { ok: true, expiresAt, invitationType: isTransfer ? 'transfer' : 'registration' })
     return
   }
 

@@ -11,7 +11,50 @@ function invitationHash(token: string): string {
 }
 
 async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])
+  if (req.method === 'GET') {
+    const parsed = acceptInvitationSchema.safeParse({ token: req.query.token })
+    if (!parsed.success) throw new HttpError(400, '招待リンクが正しくありません。代理店へ再招待をご依頼ください。')
+
+    const admin = createSupabaseAdminClient()
+    const now = new Date().toISOString()
+    const { data: invitation, error } = await admin
+      .from('customer_invitations')
+      .select('advisor_user_id, previous_advisor_user_id, invitation_kind')
+      .eq('token_hash', invitationHash(parsed.data.token))
+      .is('accepted_at', null)
+      .is('revoked_at', null)
+      .gt('expires_at', now)
+      .maybeSingle()
+
+    if (error || !invitation) {
+      throw new HttpError(400, '招待リンクが正しくないか、有効期限が切れています。代理店へ再招待をご依頼ください。')
+    }
+
+    const profileIds = [invitation.advisor_user_id, invitation.previous_advisor_user_id].filter(
+      (id): id is string => typeof id === 'string',
+    )
+    const { data: profiles } = await admin
+      .from('advisor_profiles')
+      .select('owner_user_id, advisor_name, agency_name')
+      .in('owner_user_id', profileIds)
+    const profileByOwner = new Map((profiles ?? []).map((profile) => [profile.owner_user_id, profile] as const))
+    const nextProfile = profileByOwner.get(invitation.advisor_user_id)
+    const previousProfile = invitation.previous_advisor_user_id
+      ? profileByOwner.get(invitation.previous_advisor_user_id)
+      : undefined
+
+    sendJson(res, 200, {
+      valid: true,
+      invitationType: invitation.invitation_kind,
+      advisorName: nextProfile?.advisor_name ?? null,
+      agencyName: nextProfile?.agency_name ?? null,
+      previousAdvisorName: previousProfile?.advisor_name ?? null,
+      previousAgencyName: previousProfile?.agency_name ?? null,
+    })
+    return
+  }
+
+  if (req.method !== 'POST') return methodNotAllowed(res, ['GET', 'POST'])
   assertTrustedOrigin(req)
 
   const { token } = acceptInvitationSchema.parse(await readJsonBody(req))
@@ -26,7 +69,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     .is('accepted_at', null)
     .is('revoked_at', null)
     .gt('expires_at', acceptedAt)
-    .select('id, advisor_user_id, customer_user_id, email')
+    .select('id, advisor_user_id, previous_advisor_user_id, customer_user_id, email, invitation_kind')
     .maybeSingle()
 
   if (invitationError || !invitation?.customer_user_id) {
@@ -46,15 +89,23 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: userRow, error: userError } = await admin
     .from('users')
-    .select('terms_accepted_at, terms_version, privacy_version')
+    .select('advisor_id, terms_accepted_at, terms_version, privacy_version')
     .eq('id', invitation.customer_user_id)
     .eq('role', 'customer')
-    .eq('advisor_id', invitation.advisor_user_id)
     .single()
 
   if (userError) {
     await releaseInvitation()
     throw new HttpError(500, '顧客情報を確認できませんでした。')
+  }
+
+  const isTransfer = invitation.invitation_kind === 'transfer'
+  if (
+    (isTransfer && (!invitation.previous_advisor_user_id || userRow.advisor_id !== invitation.previous_advisor_user_id)) ||
+    (!isTransfer && userRow.advisor_id !== invitation.advisor_user_id)
+  ) {
+    await releaseInvitation()
+    throw new HttpError(409, '担当者の状態が招待時から変わっています。代理店へ再招待をご依頼ください。')
   }
 
   // メールで受け取った一度限りの招待トークンを確認できたため、Supabaseの短命な
@@ -79,14 +130,39 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     throw new HttpError(400, '招待リンクを確認できませんでした。代理店へ再招待をご依頼ください。')
   }
 
-  await writeAuditLog(authClient, invitation.customer_user_id, 'accept_invitation', 'advisor', invitation.advisor_user_id)
+  // 招待先本人のセッション作成まで成功してから、関連データを一つのDB処理で切り替える。
+  // これ以降は失敗しうる必須処理を置かず、担当だけ変わってログインできない状態を避ける。
+  if (isTransfer) {
+    const { data: changed, error: transferError } = await admin.rpc('transfer_customer_advisor', {
+      customer_uid: invitation.customer_user_id,
+      new_advisor_uid: invitation.advisor_user_id,
+      expected_previous_advisor_uid: invitation.previous_advisor_user_id,
+    })
+    if (transferError || changed !== true) {
+      await authClient.auth.signOut()
+      await releaseInvitation()
+      throw new HttpError(409, '担当者を変更できませんでした。代理店へ再招待をご依頼ください。')
+    }
+  }
+
+  await writeAuditLog(
+    authClient,
+    invitation.customer_user_id,
+    isTransfer ? 'advisor_changed' : 'accept_invitation',
+    'advisor',
+    invitation.advisor_user_id,
+  )
 
   const needsOnboarding =
     !userRow.terms_accepted_at ||
     userRow.terms_version !== CURRENT_LEGAL_VERSION ||
     userRow.privacy_version !== CURRENT_LEGAL_VERSION
 
-  sendJson(res, 200, { ok: true, next: needsOnboarding ? '/onboarding' : '/' })
+  sendJson(res, 200, {
+    ok: true,
+    next: needsOnboarding ? '/onboarding' : isTransfer ? '/settings' : '/',
+    advisorChanged: isTransfer,
+  })
 }
 
 export default withErrorHandling(handler)

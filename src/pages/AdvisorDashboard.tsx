@@ -277,8 +277,10 @@ export default function AdvisorDashboard() {
     setInviteError(null)
     setInviting(true)
     try {
-      await api.post('/api/advisor/clients', { email: inviteEmail.trim() })
-      setInviteMessage('登録用の招待メールを送信しました。ご本人にメールの「登録を始める」から進むようご案内ください。')
+      const data = await api.post<{ invitationType: 'registration' | 'transfer' }>('/api/advisor/clients', { email: inviteEmail.trim() })
+      setInviteMessage(data.invitationType === 'transfer'
+        ? '担当変更の承認メールを送信しました。ご本人が承認するまで担当者は変わりません。'
+        : '登録用の招待メールを送信しました。ご本人にメールの「登録を始める」から進むようご案内ください。')
       setInviteEmail('')
       loadClients()
     } catch (err) {
