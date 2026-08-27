@@ -51,6 +51,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - `users.line_user_id` — 同一Provider内のLINE LoginとMessaging APIで共通するLINEユーザー識別子。LINEのトークンはDBへ保存しない
 - `line_notification_deliveries` — 相談LINE通知の配送結果。通知本文やLINEユーザーIDは保存せず、送信成否だけを担当者が確認する
 - `line_notification_preferences` / `line_reminder_deliveries` — 契約者のリマインド同意設定と重複送信防止用の配送結果。通知本文やLINEユーザーIDは保存しない
+- `customer_invitations` — 新規登録と担当FP変更の一度限りの招待。担当変更は招待作成時点の担当FPも記録し、契約者本人の承認時だけ切り替える
 
 全テーブルでRow Level Securityを有効化し、`insurance_policies` / `advisor_profiles` は `owner_user_id = auth.uid()` の行のみ操作可能です。`owner_user_id` はクライアントの送信値を一切信用せず、常にサーバーが認証セッションから確定させます。
 
@@ -62,7 +63,7 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 - **FPにできること**: 自分の顧客の招待(`POST /api/advisor/clients`)、自分の顧客一覧の閲覧(`GET /api/advisor/clients` — 氏名・メール・登録状況のみ)、自分自身のプロフィール編集(`/api/advisor`)
 - **FPによる保険情報の閲覧**: 初期状態では閲覧不可。契約者本人が設定画面で「全保険情報の共有」を明示的に許可した場合だけ、自分の担当顧客の登録情報を閲覧専用で確認できる。編集・削除は常に不可で、契約者が共有を解除すると直ちに閲覧できなくなる
 - **FPにできないこと**: 共有された保険情報の編集・削除、共有を許可していない顧客の保険情報の閲覧、他のFPの顧客の閲覧
-- **顧客とFPの紐づけ**: FPが顧客を招待した時点で `users.advisor_id` が自動設定される。紐づいた顧客のダッシュボードには、そのFPの `advisor_profiles` が自動表示される(`GET /api/my-advisor`)。紐づきの無い顧客は従来どおり手動入力にフォールバックする
+- **顧客とFPの紐づけ**: 新規・未担当の顧客はFPからの招待で `users.advisor_id` が設定される。すでに別FPが担当している顧客は、契約者本人がメールの担当変更画面で承認した時だけ切り替わる。変更時は旧FPへの保険共有を解除し、未完了の相談・面談を終了する。新FPへの保険共有は自動では開始しない。紐づいた顧客のダッシュボードには、そのFPの `advisor_profiles` が自動表示される(`GET /api/my-advisor`)
 - **FPアカウントの作成（手動運用）**: セルフサインアップ画面は作らない。以下の手順で運用者(あなた)が作成する
   1. Supabaseダッシュボード `Authentication > Users > Send invitation` でFPのメールアドレスを招待する
   2. SQL Editorで以下を実行し、`role` を `advisor` にする(招待直後、まだ`public.users`行が無い場合は自動的に作成される)
