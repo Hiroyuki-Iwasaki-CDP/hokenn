@@ -14,7 +14,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: userRow } = await session.supabase
     .from('users')
-    .select('display_name, manage_scope, terms_accepted_at, terms_version, privacy_version, role, advisor_id')
+    .select('display_name, manage_scope, terms_accepted_at, terms_version, privacy_version, role, advisor_id, is_operator')
     .eq('id', session.userId)
     .maybeSingle()
 
@@ -31,6 +31,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       manageScope: userRow?.manage_scope ?? null,
       role: userRow?.role ?? 'customer',
       advisorId: userRow?.advisor_id ?? null,
+      isOperator: userRow?.is_operator === true,
     },
   })
 }

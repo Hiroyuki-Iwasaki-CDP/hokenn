@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
 import { ExchangeRateProvider } from './store/ExchangeRateContext'
-import RequireAuth, { RedirectIfAuthenticated, RequireAdvisor, RequireAuthOnly } from './components/auth/RequireAuth'
+import RequireAuth, { RedirectIfAuthenticated, RequireAdvisor, RequireAuthOnly, RequireOperator } from './components/auth/RequireAuth'
 import AppLayout from './components/layout/AppLayout'
 import AdvisorLayout from './components/layout/AdvisorLayout'
 import DemoLayout from './components/layout/DemoLayout'
@@ -27,6 +27,7 @@ import LineEntry from './pages/LineEntry'
 import InviteConfirm from './pages/InviteConfirm'
 import ConsultationReport from './pages/ConsultationReport'
 import ActivityLog from './pages/ActivityLog'
+import OperatorAdvisors from './pages/OperatorAdvisors'
 
 export default function App() {
   return (
@@ -63,6 +64,12 @@ export default function App() {
               <Route path="/advisor/clients/:id" element={<AdvisorClientPolicies />} />
               <Route path="/advisor/products" element={<AdvisorProducts />} />
               <Route path="/advisor/activity" element={<ActivityLog />} />
+            </Route>
+          </Route>
+
+          <Route element={<RequireOperator />}>
+            <Route element={<AdvisorLayout />}>
+              <Route path="/operator/advisors" element={<OperatorAdvisors />} />
             </Route>
           </Route>
 

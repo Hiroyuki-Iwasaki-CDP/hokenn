@@ -49,6 +49,13 @@ export const revokeClientInvitationSchema = z.object({
   id: z.string().uuid('招待情報が正しくありません。'),
 })
 
+export const operatorAdvisorInviteSchema = z.object({ email: emailSchema }).strict()
+
+export const operatorAdvisorStatusSchema = z.object({
+  id: z.string().uuid('担当者情報が正しくありません。'),
+  active: z.boolean(),
+}).strict()
+
 export const acceptInvitationSchema = z.object({
   token: z
     .string()

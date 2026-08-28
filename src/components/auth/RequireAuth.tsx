@@ -41,6 +41,18 @@ export function RequireAdvisor() {
   return <Outlet />
 }
 
+export function RequireOperator() {
+  const { status, needsOnboarding, user } = useAuth()
+
+  if (status === 'loading') return <LoadingScreen />
+  if (status === 'unauthenticated') return <Navigate to="/login" replace />
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />
+  if (user?.role !== 'advisor') return <Navigate to="/" replace />
+  if (!user.isOperator) return <Navigate to="/advisor" replace />
+
+  return <Outlet />
+}
+
 // /onboarding 専用。ログインは必要だが、オンボーディング完了は求めない。
 export function RequireAuthOnly() {
   const { status } = useAuth()

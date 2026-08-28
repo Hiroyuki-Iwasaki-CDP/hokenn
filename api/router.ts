@@ -26,6 +26,7 @@ import exchangeRate from './_handlers/exchange-rate.js'
 import exchangeRateCron from './_handlers/cron/exchange-rate.js'
 import lineRemindersCron from './_handlers/cron/line-reminders.js'
 import linePreferences from './_handlers/line-preferences.js'
+import operatorAdvisors from './_handlers/operator/advisors.js'
 import { sendJson } from './_lib/http.js'
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => unknown
@@ -54,6 +55,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/audit-logs': auditLogs,
   '/api/exchange-rate': exchangeRate,
   '/api/line-preferences': linePreferences,
+  '/api/operator/advisors': operatorAdvisors,
   '/api/cron/exchange-rate': exchangeRateCron,
   '/api/cron/line-reminders': lineRemindersCron,
 }

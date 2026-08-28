@@ -22,7 +22,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         privacy_version: CURRENT_LEGAL_VERSION,
       })
       .eq('id', session.userId)
-      .select('display_name, manage_scope, terms_accepted_at, role, advisor_id')
+      .select('display_name, manage_scope, terms_accepted_at, role, advisor_id, is_operator')
       .single()
 
     if (error) throw new HttpError(500, 'サーバーエラーが発生しました。')
@@ -36,6 +36,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         manageScope: data.manage_scope,
         role: data.role,
         advisorId: data.advisor_id,
+        isOperator: data.is_operator === true,
       },
     })
     return

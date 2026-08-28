@@ -149,6 +149,7 @@ export interface AuthUser {
   manageScope: ManageScope | null
   role: UserRole
   advisorId: string | null
+  isOperator: boolean
 }
 
 export interface AdvisorClient {

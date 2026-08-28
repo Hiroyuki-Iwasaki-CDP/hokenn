@@ -29,6 +29,13 @@ export async function getSessionUser(req: VercelRequest, res: VercelResponse): P
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) return null
 
+  const { data: userStatus, error: statusError } = await supabase
+    .from('users')
+    .select('is_active')
+    .eq('id', data.user.id)
+    .maybeSingle()
+  if (statusError || userStatus?.is_active === false) return null
+
   return { userId: data.user.id, email: data.user.email ?? '', supabase }
 }
 
@@ -44,6 +51,10 @@ export interface AdvisorSessionContext extends SessionContext {
   role: 'advisor'
 }
 
+export interface OperatorSessionContext extends AdvisorSessionContext {
+  isOperator: true
+}
+
 /**
  * FP専用エンドポイント向け。通常のセッション確認に加えて role='advisor' であることを
  * 確認する(顧客アカウントがFP用APIを呼べないようにするため)。
@@ -56,4 +67,17 @@ export async function requireAdvisorSession(req: VercelRequest, res: VercelRespo
     throw new HttpError(403, 'この操作は担当者アカウントでのみ行えます。')
   }
   return { ...session, role: 'advisor' }
+}
+
+export async function requireOperatorSession(req: VercelRequest, res: VercelResponse): Promise<OperatorSessionContext> {
+  const session = await requireSessionUser(req, res)
+  const { data, error } = await session.supabase
+    .from('users')
+    .select('role, is_operator, is_active')
+    .eq('id', session.userId)
+    .maybeSingle()
+  if (error || data?.role !== 'advisor' || data.is_operator !== true || data.is_active !== true) {
+    throw new HttpError(403, 'この操作は運営者アカウントでのみ行えます。')
+  }
+  return { ...session, role: 'advisor', isOperator: true }
 }

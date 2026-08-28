@@ -7,6 +7,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const openedFromLine = searchParams.get('source') === 'line'
+  const advisorInvited = searchParams.get('advisor') === 'invited'
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +43,11 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-6 shadow-sm">
+          {advisorInvited && (
+            <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-xs leading-relaxed text-brand-800">
+              担当者アカウントの招待を確認しました。招待されたメールアドレスへ認証コードを送ってログインしてください。
+            </div>
+          )}
           {openedFromLine && (
             <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-xs leading-relaxed text-brand-800">
               公式LINEから保険確認を開きました。登録済みのメールアドレスへ認証コードを送ります。

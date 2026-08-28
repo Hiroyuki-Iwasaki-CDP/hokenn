@@ -38,11 +38,15 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: userRow, error: upsertError } = await supabase
     .from('users')
     .upsert({ id: userId, email }, { onConflict: 'id', ignoreDuplicates: false })
-    .select('terms_accepted_at, terms_version, privacy_version, display_name, role, advisor_id')
+    .select('terms_accepted_at, terms_version, privacy_version, display_name, role, advisor_id, is_operator, is_active')
     .single()
 
   if (upsertError) {
     throw new HttpError(500, 'サーバーエラーが発生しました。しばらくしてから再度お試しください。')
+  }
+  if (userRow.is_active === false) {
+    await supabase.auth.signOut()
+    throw new HttpError(403, 'このアカウントは現在利用停止中です。運営へお問い合わせください。')
   }
 
   await writeAuditLog(supabase, userId, 'login', 'session')
@@ -59,6 +63,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       displayName: userRow?.display_name ?? null,
       role: userRow?.role ?? 'customer',
       advisorId: userRow?.advisor_id ?? null,
+      isOperator: userRow?.is_operator === true,
     },
   })
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { BriefcaseBusiness, History, LogOut, ShieldCheck, Users } from 'lucide-react'
+import { BriefcaseBusiness, History, LogOut, ShieldCheck, UserCog, Users } from 'lucide-react'
 import { useAuth } from '../../store/AuthContext'
 import PrivacyFooter from './PrivacyFooter'
 import { api } from '../../lib/api'
@@ -79,6 +79,16 @@ export default function AdvisorLayout() {
             <BriefcaseBusiness size={18} strokeWidth={2.25} />
             取扱商品管理
           </NavLink>
+          {user?.isOperator && (
+            <NavLink
+              to="/operator/advisors"
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${isActive ? 'bg-brand-50 text-brand-900' : 'text-brand-100 hover:bg-white/10 hover:text-white'}`
+              }
+            >
+              <UserCog size={18} strokeWidth={2.25} />担当者アカウント管理
+            </NavLink>
+          )}
         </nav>
 
         <div className="mt-auto pt-6">
@@ -105,7 +115,7 @@ export default function AdvisorLayout() {
             ログアウト
           </button>
         </header>
-        <nav className="grid grid-cols-3 border-b border-line bg-white md:hidden">
+        <nav className={`grid ${user?.isOperator ? 'grid-cols-4' : 'grid-cols-3'} border-b border-line bg-white md:hidden`}>
           <NavLink
             to="/advisor"
             end
@@ -137,6 +147,16 @@ export default function AdvisorLayout() {
             <BriefcaseBusiness size={15} />
             取扱商品
           </NavLink>
+          {user?.isOperator && (
+            <NavLink
+              to="/operator/advisors"
+              className={({ isActive }) =>
+                `flex items-center justify-center gap-1 px-2 py-3 text-xs font-bold ${isActive ? 'border-b-2 border-brand-700 text-brand-800' : 'text-ink-muted'}`
+              }
+            >
+              <UserCog size={15} />運営
+            </NavLink>
+          )}
         </nav>
         <main className="flex-1 px-4 pt-6 pb-10 sm:px-6 md:px-10 md:pt-8">
           <div className="mx-auto max-w-3xl">

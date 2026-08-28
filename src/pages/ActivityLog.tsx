@@ -8,6 +8,7 @@ const ACTION_LABELS: Record<string, string> = {
   create: '保険を登録', update: '情報を更新', delete: '保険を削除', invite_client: '顧客を招待',
   advisor_changed: '担当FPを変更',
   revoke_client_invitation: '顧客招待を取消',
+  invite_advisor: '担当者を招待', suspend_advisor: '担当者の利用を停止', reactivate_advisor: '担当者の利用を再開',
   view_shared_policies: '共有された保険を閲覧', grant_full_policy_access: '保険情報の共有を許可', revoke_full_policy_access: '保険情報の共有を解除',
   consultation_appointment_requested: '相談日時を申込み', consultation_appointment_rescheduled: '相談日時候補を変更',
   consultation_appointment_confirmed: '相談日時を確定', consultation_appointment_completed: '相談を完了', consultation_appointment_cancelled: '相談を取消',
