@@ -1,4 +1,18 @@
-{{ if and .Data.pending_invitation_redirect (eq .RedirectTo .Data.pending_invitation_redirect) }}
+{{ if and (eq .Data.pending_invitation_kind "family") .Data.pending_invitation_redirect (eq .RedirectTo .Data.pending_invitation_redirect) }}
+<div style="max-width:480px;margin:0 auto;padding:32px 24px;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#14201d;">
+  <p style="font-size:13px;font-weight:bold;letter-spacing:0.05em;color:#10635c;margin:0 0 8px;">わが家の保険</p>
+  <h1 style="font-size:20px;margin:0 0 20px;">家族から招待されました</h1>
+  <p style="font-size:14px;line-height:1.8;margin:0 0 20px;">
+    お互いの保険概要を読み取り専用で確認するための招待です。内容を確認し、ご本人が承認すると家族連携が始まります。
+  </p>
+  <p style="margin:0 0 22px;">
+    <a href="{{ .RedirectTo }}" style="display:block;border-radius:12px;background:#10635c;padding:14px 20px;text-align:center;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">家族招待を確認する</a>
+  </p>
+  <p style="font-size:13px;line-height:1.7;color:#52534e;margin:0 0 20px;">
+    承認しても編集・削除はできません。証券番号・受取人・メモ・連絡先・添付情報は家族へ共有されません。招待リンクは7日間有効です。
+  </p>
+</div>
+{{ else if and .Data.pending_invitation_redirect (eq .RedirectTo .Data.pending_invitation_redirect) }}
 <div style="max-width:480px;margin:0 auto;padding:32px 24px;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#14201d;">
   <p style="font-size:13px;font-weight:bold;letter-spacing:0.05em;color:#10635c;margin:0 0 8px;">わが家の保険</p>
   <h1 style="font-size:20px;margin:0 0 20px;">保険代理店から招待されました</h1>

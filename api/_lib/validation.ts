@@ -63,6 +63,17 @@ export const acceptInvitationSchema = z.object({
     .regex(/^[A-Za-z0-9_-]{43}$/, '招待リンクが正しくありません。'),
 })
 
+export const inviteFamilySchema = z.object({ email: emailSchema }).strict()
+
+export const familyActionSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('invitation'), id: z.string().uuid('招待情報が正しくありません。') }).strict(),
+  z.object({ action: z.literal('connection'), id: z.string().uuid('家族連携情報が正しくありません。') }).strict(),
+])
+
+export const familyMemberQuerySchema = z.object({
+  memberId: z.string().uuid('家族情報が正しくありません。'),
+})
+
 export const policySharingUpdateSchema = z.discriminatedUnion('enabled', [
   z.object({
     enabled: z.literal(true),

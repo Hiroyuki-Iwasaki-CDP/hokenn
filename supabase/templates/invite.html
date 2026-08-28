@@ -9,6 +9,18 @@
   <p style="margin:0 0 22px;">
     <a href="{{ .RedirectTo }}" style="display:block;border-radius:12px;background:#10635c;padding:14px 20px;text-align:center;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">担当者ログインへ進む</a>
   </p>
+  {{ else if eq .Data.account_role "family" }}
+  <h1 style="font-size:20px;margin:0 0 20px;">家族から招待されました</h1>
+  <p style="font-size:14px;line-height:1.8;margin:0 0 22px;">
+    「わが家の保険」で、お互いの保険概要を読み取り専用で確認するための招待です。<br>
+    下のボタンから内容を確認し、ご本人が承認すると家族連携が始まります。
+  </p>
+  <p style="margin:0 0 22px;">
+    <a href="{{ .RedirectTo }}" style="display:block;border-radius:12px;background:#10635c;padding:14px 20px;text-align:center;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">家族招待を確認する</a>
+  </p>
+  <p style="font-size:13px;line-height:1.7;color:#52534e;margin:0 0 20px;">
+    承認しても編集・削除はできません。証券番号・受取人・メモ・連絡先・添付情報は家族へ共有されません。招待リンクは7日間有効です。
+  </p>
   {{ else }}
   <h1 style="font-size:20px;margin:0 0 20px;">保険代理店から招待されました</h1>
   <p style="font-size:14px;line-height:1.8;margin:0 0 22px;">

@@ -51,6 +51,10 @@ export interface AdvisorSessionContext extends SessionContext {
   role: 'advisor'
 }
 
+export interface CustomerSessionContext extends SessionContext {
+  role: 'customer'
+}
+
 export interface OperatorSessionContext extends AdvisorSessionContext {
   isOperator: true
 }
@@ -67,6 +71,19 @@ export async function requireAdvisorSession(req: VercelRequest, res: VercelRespo
     throw new HttpError(403, 'この操作は担当者アカウントでのみ行えます。')
   }
   return { ...session, role: 'advisor' }
+}
+
+export async function requireCustomerSession(req: VercelRequest, res: VercelResponse): Promise<CustomerSessionContext> {
+  const session = await requireSessionUser(req, res)
+  const { data, error } = await session.supabase
+    .from('users')
+    .select('role, is_active, deleted_at')
+    .eq('id', session.userId)
+    .maybeSingle()
+  if (error || data?.role !== 'customer' || data.is_active !== true || data.deleted_at !== null) {
+    throw new HttpError(403, 'この操作は契約者アカウントでのみ行えます。')
+  }
+  return { ...session, role: 'customer' }
 }
 
 export async function requireOperatorSession(req: VercelRequest, res: VercelResponse): Promise<OperatorSessionContext> {

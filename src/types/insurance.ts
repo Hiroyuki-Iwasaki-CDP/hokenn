@@ -244,3 +244,43 @@ export interface PolicySharingStatus {
   scope: 'full' | null
   grantedAt: string | null
 }
+
+export interface FamilyConnection {
+  id: string
+  memberId: string
+  displayName: string | null
+  email: string
+  linkedAt: string
+}
+
+export interface PendingFamilyInvitation {
+  id: string
+  email: string
+  expiresAt: string
+  createdAt: string
+}
+
+export type FamilySharedPolicy = Pick<
+  InsurancePolicy,
+  | 'id'
+  | 'insuredPersonName'
+  | 'category'
+  | 'insuranceCompany'
+  | 'productName'
+  | 'mainContractName'
+  | 'currency'
+  | 'coverageAmount'
+  | 'hospitalizationDaily'
+  | 'surgeryBenefit'
+  | 'diagnosisBenefit'
+  | 'premiumAmount'
+  | 'premiumFrequency'
+  | 'contractDate'
+  | 'contractType'
+  | 'renewalDate'
+  | 'maturityDate'
+  | 'coverageEndAge'
+  | 'premiumEndDate'
+  | 'premiumEndAge'
+  | 'status'
+>

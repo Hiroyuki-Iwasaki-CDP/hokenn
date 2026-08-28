@@ -269,6 +269,8 @@ export default function Settings() {
 
       <Link to="/activity" className="flex items-center justify-between rounded-2xl border border-line bg-white p-5 text-sm font-bold text-ink hover:bg-plane sm:p-6"><span className="flex items-center gap-2"><History size={17} />操作履歴を確認</span><span className="text-xs font-semibold text-brand-700">最新100件</span></Link>
 
+      <Link to="/family" className="flex items-center justify-between rounded-2xl border border-line bg-white p-5 text-sm font-bold text-ink hover:bg-plane sm:p-6"><span className="flex items-center gap-2"><UsersIcon size={17} />家族を招待・連携</span><span className="text-xs font-semibold text-brand-700">家族連携を開く</span></Link>
+
       <div className="space-y-3 rounded-2xl border border-line bg-white p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink"><Download size={16} />登録データの保存</h2>
         <p className="text-xs leading-relaxed text-ink-muted">

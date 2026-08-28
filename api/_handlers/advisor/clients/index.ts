@@ -222,7 +222,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // アプリ招待が作成した未利用アカウントで、有効な別招待も無い場合だけ認証アカウントごと削除する。
     // 手動作成・既存顧客・利用開始済み顧客は絶対に削除しない。
     if (data.customer_user_id) {
-      const [{ data: customer }, { count: otherActiveInvitations }] = await Promise.all([
+      const [{ data: customer }, { count: otherActiveInvitations }, { count: familyInvitations }, { count: familyConnections }] = await Promise.all([
         admin
           .from('users')
           .select('invitation_provisioned, terms_accepted_at')
@@ -235,8 +235,26 @@ async function handler(req: VercelRequest, res: VercelResponse) {
           .is('accepted_at', null)
           .is('revoked_at', null)
           .gt('expires_at', new Date().toISOString()),
+        admin
+          .from('family_invitations')
+          .select('id', { count: 'exact', head: true })
+          .eq('invitee_user_id', data.customer_user_id)
+          .is('accepted_at', null)
+          .is('revoked_at', null)
+          .gt('expires_at', new Date().toISOString()),
+        admin
+          .from('family_connections')
+          .select('id', { count: 'exact', head: true })
+          .or(`member_a_user_id.eq.${data.customer_user_id},member_b_user_id.eq.${data.customer_user_id}`)
+          .is('revoked_at', null),
       ])
-      if (customer?.invitation_provisioned && !customer.terms_accepted_at && (otherActiveInvitations ?? 0) === 0) {
+      if (
+        customer?.invitation_provisioned &&
+        !customer.terms_accepted_at &&
+        (otherActiveInvitations ?? 0) === 0 &&
+        (familyInvitations ?? 0) === 0 &&
+        (familyConnections ?? 0) === 0
+      ) {
         const { error: deleteError } = await admin.auth.admin.deleteUser(data.customer_user_id)
         if (deleteError) throw new HttpError(500, '招待は無効化しましたが、仮アカウントを削除できませんでした。運営へご連絡ください。')
       }

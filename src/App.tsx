@@ -28,6 +28,8 @@ import InviteConfirm from './pages/InviteConfirm'
 import ConsultationReport from './pages/ConsultationReport'
 import ActivityLog from './pages/ActivityLog'
 import OperatorAdvisors from './pages/OperatorAdvisors'
+import Family from './pages/Family'
+import FamilyInviteConfirm from './pages/FamilyInviteConfirm'
 
 export default function App() {
   return (
@@ -53,6 +55,7 @@ export default function App() {
 
           <Route path="/line" element={<LineEntry />} />
           <Route path="/invite/confirm" element={<InviteConfirm />} />
+          <Route path="/family/invite" element={<FamilyInviteConfirm />} />
 
           <Route element={<RequireAuthOnly />}>
             <Route path="/onboarding" element={<Onboarding />} />
@@ -90,6 +93,7 @@ export default function App() {
               <Route path="/consultation" element={<ConsultationReport />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/activity" element={<ActivityLog />} />
+              <Route path="/family" element={<Family />} />
             </Route>
           </Route>
           </Routes>

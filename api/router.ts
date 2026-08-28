@@ -27,6 +27,9 @@ import exchangeRateCron from './_handlers/cron/exchange-rate.js'
 import lineRemindersCron from './_handlers/cron/line-reminders.js'
 import linePreferences from './_handlers/line-preferences.js'
 import operatorAdvisors from './_handlers/operator/advisors.js'
+import family from './_handlers/family/index.js'
+import familyPolicies from './_handlers/family/policies.js'
+import acceptFamilyInvitation from './_handlers/auth/accept-family-invitation.js'
 import { sendJson } from './_lib/http.js'
 
 type ApiHandler = (req: VercelRequest, res: VercelResponse) => unknown
@@ -43,6 +46,7 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/auth/line/status': lineStatus,
   '/api/auth/logout': logout,
   '/api/auth/accept-invitation': acceptInvitation,
+  '/api/auth/accept-family-invitation': acceptFamilyInvitation,
   '/api/auth/request-code': requestCode,
   '/api/auth/session': session,
   '/api/auth/verify-code': verifyCode,
@@ -56,6 +60,8 @@ const exactRoutes: Record<string, ApiHandler> = {
   '/api/exchange-rate': exchangeRate,
   '/api/line-preferences': linePreferences,
   '/api/operator/advisors': operatorAdvisors,
+  '/api/family': family,
+  '/api/family/policies': familyPolicies,
   '/api/cron/exchange-rate': exchangeRateCron,
   '/api/cron/line-reminders': lineRemindersCron,
 }
