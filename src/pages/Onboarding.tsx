@@ -10,9 +10,10 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const { user, setUser } = useAuth()
   const isAdvisor = user?.role === 'advisor'
+  const isReturningUser = !!user?.displayName
 
-  const [displayName, setDisplayName] = useState('')
-  const [manageScope, setManageScope] = useState<ManageScope>('self')
+  const [displayName, setDisplayName] = useState(user?.displayName ?? '')
+  const [manageScope, setManageScope] = useState<ManageScope>(user?.manageScope ?? 'self')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [sensitiveAck, setSensitiveAck] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -48,7 +49,10 @@ export default function Onboarding() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-700 text-white">
             <ShieldCheck size={18} strokeWidth={2.25} />
           </span>
-          <h1 className="text-lg font-bold text-ink">はじめまして。初期設定をお願いします。</h1>
+          <div>
+            <h1 className="text-lg font-bold text-ink">{isReturningUser ? '利用条件の確認をお願いします。' : 'はじめまして。初期設定をお願いします。'}</h1>
+            {isReturningUser && <p className="mt-1 text-xs text-ink-muted">家族連携機能の追加に伴い、利用規約とプライバシーポリシーを更新しました。</p>}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-line bg-white p-6">
@@ -128,7 +132,7 @@ export default function Onboarding() {
             disabled={!canSubmit || submitting}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? '保存しています…' : 'はじめる'}
+            {submitting ? '保存しています…' : isReturningUser ? '同意して続ける' : 'はじめる'}
           </button>
         </form>
       </div>
