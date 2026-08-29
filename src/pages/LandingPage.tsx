@@ -80,14 +80,29 @@ export default function LandingPage() {
       <section className="bg-plane">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="text-center"><p className="text-xs font-bold tracking-widest text-brand-600 uppercase">Features</p><h2 className="mt-2 text-3xl font-bold text-ink">保険管理に必要な機能を、一つに</h2></div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{features.map(({ icon:Icon,title,text }) => <article key={title} className="rounded-2xl bg-white p-5 shadow-sm"><Icon size={20} className="text-brand-700" /><h3 className="mt-4 font-bold text-ink">{title}</h3><p className="mt-2 text-sm leading-6 text-ink-secondary">{text}</p></article>)}</div>
+          <div className="mt-10 grid overflow-hidden rounded-3xl border border-line bg-white shadow-sm lg:grid-cols-[1.15fr_.85fr]">
+            <img src="/images/insurance-overview.jpg" alt="複数の保険をタブレットで整理したイメージ" width="1600" height="1024" loading="lazy" decoding="async" className="aspect-[16/10] h-full w-full object-cover" />
+            <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
+              <p className="text-xs font-bold tracking-widest text-brand-600 uppercase">One overview</p>
+              <h3 className="mt-2 text-2xl font-bold text-ink">ばらばらの契約を、<br className="hidden sm:block" />同じ基準で整理</h3>
+              <p className="mt-4 text-sm leading-7 text-ink-secondary">医療・死亡・がん・年金など、種類や保険会社が違う契約も一つの画面へ。家族ごとの保険料と保障分野を見渡せます。</p>
+              <div className="mt-6 flex flex-wrap gap-2">{['保険料を月額換算','ドル建てを円換算','更新・満期を確認'].map((text) => <span key={text} className="rounded-full bg-brand-50 px-3 py-1.5 text-[11px] font-bold text-brand-800">{text}</span>)}</div>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{features.map(({ icon:Icon,title,text }) => <article key={title} className="rounded-2xl bg-white p-5 shadow-sm"><Icon size={20} className="text-brand-700" /><h3 className="mt-4 font-bold text-ink">{title}</h3><p className="mt-2 text-sm leading-6 text-ink-secondary">{text}</p></article>)}</div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div><p className="text-xs font-bold tracking-widest text-brand-600 uppercase">How it works</p><h2 className="mt-2 text-3xl font-bold text-ink">招待から相談まで、迷わない流れ</h2><div className="mt-8 space-y-5">{[['01','メールの招待から本人確認'],['02','契約者が保険情報を登録'],['03','家族・保障分野・期間を確認'],['04','必要なときだけ担当者へ相談']].map(([number,text]) => <div key={number} className="flex items-center gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700 text-xs font-bold text-white">{number}</span><p className="font-bold text-ink">{text}</p></div>)}</div></div>
-          <div className="rounded-3xl bg-brand-900 p-6 text-white sm:p-8"><LockKeyhole size={26} className="text-brand-200" /><h3 className="mt-5 text-2xl font-bold">必要な人に、必要な範囲だけ</h3><ul className="mt-6 space-y-4 text-sm leading-6 text-brand-100">{['担当代理店は本人の許可がある場合だけ保険情報を閲覧','家族は双方の承認後に概要のみ閲覧し、編集・削除は不可','証券画像・病歴・口座情報などは登録対象外','LINEの認証トークンは保存せず、連携はいつでも解除可能'].map((text) => <li key={text} className="flex gap-2"><Check size={16} className="mt-1 shrink-0 text-brand-300" />{text}</li>)}</ul><Link to="/privacy" className="mt-7 inline-flex items-center gap-1 text-xs font-bold text-white underline decoration-brand-300 underline-offset-4">プライバシーポリシーを確認<ArrowRight size={13} /></Link></div>
+          <div className="space-y-4">
+            <figure className="overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
+              <img src="/images/advisor-consultation.jpg" alt="担当者と契約者がタブレットを見ながら相談している様子" width="1600" height="1024" loading="lazy" decoding="async" className="aspect-[16/9] w-full object-cover" />
+              <figcaption className="flex items-center gap-3 px-5 py-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><MessageCircle size={17} /></span><div><p className="text-sm font-bold text-ink">見える化した内容をもとに相談</p><p className="mt-0.5 text-xs text-ink-muted">希望日時を送り、担当者と一緒に確認できます。</p></div></figcaption>
+            </figure>
+            <div className="rounded-3xl bg-brand-900 p-6 text-white sm:p-8"><LockKeyhole size={26} className="text-brand-200" /><h3 className="mt-5 text-2xl font-bold">必要な人に、必要な範囲だけ</h3><ul className="mt-6 space-y-4 text-sm leading-6 text-brand-100">{['担当代理店は本人の許可がある場合だけ保険情報を閲覧','家族は双方の承認後に概要のみ閲覧し、編集・削除は不可','証券画像・病歴・口座情報などは登録対象外','LINEの認証トークンは保存せず、連携はいつでも解除可能'].map((text) => <li key={text} className="flex gap-2"><Check size={16} className="mt-1 shrink-0 text-brand-300" />{text}</li>)}</ul><Link to="/privacy" className="mt-7 inline-flex items-center gap-1 text-xs font-bold text-white underline decoration-brand-300 underline-offset-4">プライバシーポリシーを確認<ArrowRight size={13} /></Link></div>
+          </div>
         </div>
       </section>
 

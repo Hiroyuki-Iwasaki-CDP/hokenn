@@ -1,3 +1,4 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './store/AuthContext'
 import { InsuranceProvider } from './store/InsuranceContext'
@@ -31,8 +32,13 @@ import OperatorAdvisors from './pages/OperatorAdvisors'
 import Family from './pages/Family'
 import FamilyInviteConfirm from './pages/FamilyInviteConfirm'
 import PublicSiteLayout from './components/layout/PublicSiteLayout'
-import LandingPage from './pages/LandingPage'
-import Manual from './pages/Manual'
+
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const Manual = lazy(() => import('./pages/Manual'))
+
+function LazyPublicPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<div className="flex min-h-[45vh] items-center justify-center bg-paper text-sm text-ink-muted">読み込んでいます…</div>}>{children}</Suspense>
+}
 
 export default function App() {
   return (
@@ -47,8 +53,8 @@ export default function App() {
           </Route>
 
           <Route element={<PublicSiteLayout />}>
-            <Route path="/about" element={<LandingPage />} />
-            <Route path="/manual" element={<Manual />} />
+            <Route path="/about" element={<LazyPublicPage><LandingPage /></LazyPublicPage>} />
+            <Route path="/manual" element={<LazyPublicPage><Manual /></LazyPublicPage>} />
           </Route>
 
           {/* ログイン不要の見た目だけのデモ画面。サンプルデータのみで、実データ・実APIには触れない。 */}
