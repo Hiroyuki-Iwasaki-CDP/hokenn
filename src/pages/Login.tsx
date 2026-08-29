@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ShieldCheck, Mail } from 'lucide-react'
 import { api, ApiError } from '../lib/api'
 
@@ -98,6 +98,11 @@ export default function Login() {
         <p className="mt-4 text-center text-[11px] leading-relaxed text-brand-100">
           安全のため、保険証券画像・病歴・口座情報などの機密情報は登録しないでください。
         </p>
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs font-semibold text-brand-100">
+          <Link to="/about" className="hover:text-white hover:underline">サービス紹介</Link>
+          <Link to="/manual" className="hover:text-white hover:underline">使い方マニュアル</Link>
+          <Link to="/demo" className="hover:text-white hover:underline">デモ</Link>
+        </div>
       </div>
     </div>
   )

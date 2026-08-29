@@ -30,6 +30,9 @@ import ActivityLog from './pages/ActivityLog'
 import OperatorAdvisors from './pages/OperatorAdvisors'
 import Family from './pages/Family'
 import FamilyInviteConfirm from './pages/FamilyInviteConfirm'
+import PublicSiteLayout from './components/layout/PublicSiteLayout'
+import LandingPage from './pages/LandingPage'
+import Manual from './pages/Manual'
 
 export default function App() {
   return (
@@ -41,6 +44,11 @@ export default function App() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/products" element={<Products />} />
+          </Route>
+
+          <Route element={<PublicSiteLayout />}>
+            <Route path="/about" element={<LandingPage />} />
+            <Route path="/manual" element={<Manual />} />
           </Route>
 
           {/* ログイン不要の見た目だけのデモ画面。サンプルデータのみで、実データ・実APIには触れない。 */}
