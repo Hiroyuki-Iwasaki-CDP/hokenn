@@ -19,28 +19,30 @@ const roles = [
   { eyebrow: '家族', title: '必要な概要だけを相互共有', text: '双方の承認後、保険概要を読み取り専用で確認。証券番号・受取人・メモ等は共有しません。', icon: LockKeyhole },
 ]
 
-function ProductPreview() {
+function HeroVisual() {
   return (
     <div className="relative mx-auto w-full max-w-lg">
-      <div className="absolute -inset-5 rounded-[2rem] bg-brand-200/30 blur-2xl" />
-      <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white p-4 shadow-2xl shadow-brand-900/10 sm:p-5">
-        <div className="flex items-center justify-between border-b border-line pb-4">
-          <div><p className="text-[10px] font-bold tracking-widest text-brand-600 uppercase">Insurance Overview</p><p className="mt-1 text-lg font-bold text-ink">家族全体の保険</p></div>
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-[10px] font-bold text-brand-700">更新済み</span>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          {[['加入中','8件'],['月額換算','42,800円'],['次の更新','11月']].map(([label,value]) => <div key={label} className="rounded-xl bg-plane p-3"><p className="text-[9px] text-ink-muted">{label}</p><p className="mt-1 text-xs font-bold text-ink sm:text-sm">{value}</p></div>)}
-        </div>
-        <div className="mt-4 rounded-2xl border border-line p-4">
-          <div className="flex items-center justify-between"><p className="text-xs font-bold text-ink">保障分野</p><p className="text-[9px] text-ink-muted">家族全体</p></div>
-          <div className="mt-4 grid grid-cols-6 gap-2">
-            {['医療','死亡','がん','年金','火災','自動車'].map((label,index) => <div key={label} className="text-center"><span className={`mx-auto block h-7 w-7 rounded-full ${index < 4 ? 'bg-brand-500' : 'bg-line'}`} /><span className="mt-1 block text-[8px] text-ink-muted">{label}</span></div>)}
+      <div className="absolute -inset-5 rounded-[2.5rem] bg-brand-200/35 blur-2xl" />
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white shadow-2xl shadow-brand-900/15">
+        <img
+          src="/images/hero-family.jpg"
+          alt="家族でタブレットを見ながら保険を確認している様子"
+          width="1600"
+          height="800"
+          fetchPriority="high"
+          decoding="async"
+          className="aspect-[4/3] w-full object-cover object-center sm:aspect-[5/4]"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-brand-950/70 to-transparent" />
+        <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 sm:inset-x-5 sm:bottom-5">
+          <div className="rounded-2xl border border-white/70 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+            <p className="text-[10px] font-bold tracking-widest text-brand-600 uppercase">Family Insurance</p>
+            <p className="mt-1 text-sm font-bold text-ink sm:text-base">家族の備えを一緒に確認</p>
           </div>
-        </div>
-        <div className="mt-3 space-y-2">
-          {['終身医療保険','ドル建終身保険','個人年金保険'].map((name,index) => <div key={name} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"><span className={`h-8 w-8 rounded-lg ${index === 1 ? 'bg-violet-100' : index === 2 ? 'bg-amber-100' : 'bg-brand-100'}`} /><div className="min-w-0 flex-1"><p className="truncate text-[11px] font-bold text-ink">{name}</p><p className="text-[9px] text-ink-muted">保障中・本人</p></div><span className="text-[10px] font-bold text-ink-secondary">詳細</span></div>)}
+          <span className="mb-1 shrink-0 rounded-full border border-white/40 bg-brand-800/85 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur">本人が共有を管理</span>
         </div>
       </div>
+      <div className="absolute -right-2 -top-3 flex items-center gap-2 rounded-xl border border-brand-100 bg-white px-3 py-2 text-[10px] font-bold text-brand-800 shadow-lg sm:-right-4 sm:top-5"><ShieldCheck size={14} />招待制で安心</div>
     </div>
   )
 }
@@ -60,7 +62,7 @@ export default function LandingPage() {
             </div>
             <p className="mt-4 text-xs leading-relaxed text-ink-muted">ご利用には保険代理店または家族からの招待が必要です。セルフ登録は受け付けていません。</p>
           </div>
-          <ProductPreview />
+          <HeroVisual />
         </div>
       </section>
 
