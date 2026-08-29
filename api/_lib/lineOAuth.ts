@@ -57,7 +57,8 @@ export function buildLineAuthorizeUrl(
     nonce: values.nonce,
     code_challenge: values.challenge,
     code_challenge_method: 'S256',
-    bot_prompt: 'normal',
+    // LINE連携を完了する前に、リンク済み公式アカウントの友だち追加画面を明示的に表示する。
+    bot_prompt: 'aggressive',
   }).toString()
   return url.toString()
 }

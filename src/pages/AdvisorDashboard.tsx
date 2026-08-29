@@ -161,7 +161,16 @@ export default function AdvisorDashboard() {
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search)
-    if (search.get('line') === 'error') setLineError('LINEを連携できませんでした。別のアカウントと連携済みでないか確認してください。')
+    if (search.get('line') === 'error') {
+      const reason = search.get('reason')
+      setLineError(
+        reason === 'friend_required'
+          ? 'LINE連携には公式LINEの友だち追加が必要です。友だち追加してから、もう一度お試しください。'
+          : reason === 'friendship_check_failed'
+            ? '公式LINEの友だち追加状態を確認できませんでした。時間をおいてもう一度お試しください。'
+            : 'LINEを連携できませんでした。別のアカウントと連携済みでないか確認してください。',
+      )
+    }
     loadClients()
     loadConsultations()
     loadAppointments()
@@ -353,7 +362,7 @@ export default function AdvisorDashboard() {
             <button type="button" onClick={() => void testLineNotification()} disabled={lineTesting} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d] disabled:opacity-60"><BellRing size={16} />{lineTesting ? '送信中…' : 'テスト通知を送る'}</button>
           )}
           {lineConnection && !lineConnection.linked && lineConnection.configured && (
-            <a href="/api/auth/line/start?flow=link&next=advisor" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d]"><Link2 size={16} />LINEを連携する</a>
+            <a href="/api/auth/line/start?flow=link&next=advisor" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d]"><Link2 size={16} />公式LINEを追加して連携</a>
           )}
         </div>
         {lineTestMessage && <p className="mt-3 text-xs font-semibold text-brand-700">{lineTestMessage}</p>}

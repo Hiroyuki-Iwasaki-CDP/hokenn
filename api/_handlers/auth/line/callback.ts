@@ -27,6 +27,10 @@ interface LineIdTokenPayload {
   name?: string
 }
 
+interface LineFriendshipStatus {
+  friendFlag?: boolean
+}
+
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET'])
   clearLineOAuthCookies(res)
@@ -88,6 +92,27 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const identity = (await verifyResponse.json()) as LineIdTokenPayload
   if (!identity.sub || !/^U[0-9a-f]{32}$/.test(identity.sub)) {
     res.redirect(302, errorRedirect('invalid_user'))
+    return
+  }
+
+  // 相談受付やリマインドを確実に届けるため、公式アカウントの友だち追加を
+  // LINE連携・LINEログインの成立条件にする。アクセストークンはこの確認だけに使い、保存しない。
+  if (!tokens.access_token) {
+    res.redirect(302, errorRedirect('friendship_check_failed'))
+    return
+  }
+
+  const friendshipResponse = await fetch('https://api.line.me/friendship/v1/status', {
+    headers: { Authorization: `Bearer ${tokens.access_token}` },
+  })
+  if (!friendshipResponse.ok) {
+    res.redirect(302, errorRedirect('friendship_check_failed'))
+    return
+  }
+
+  const friendship = (await friendshipResponse.json()) as LineFriendshipStatus
+  if (friendship.friendFlag !== true) {
+    res.redirect(302, errorRedirect('friend_required'))
     return
   }
 

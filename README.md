@@ -106,8 +106,8 @@ Supabase (Postgres + Row Level Security + Auth[メールOTP, カスタムSMTP経
 
 1. メール認証でログイン済みの契約者が、設定画面からLINE連携を開始する
 2. サーバーが`state`・`nonce`・PKCE用の値を生成し、httpOnly Cookieへ10分間だけ保存する
-3. LINE Loginの認可後、`/api/auth/line/callback`で認可コードをアクセストークン・IDトークンへ交換する
-4. LINEの検証APIでIDトークン、チャネルID、`nonce`を照合し、検証済みの`sub`だけを`users.line_user_id`へ保存する
+3. LINE Loginの認可と公式アカウントの友だち追加後、`/api/auth/line/callback`で認可コードをアクセストークン・IDトークンへ交換する
+4. LINEの検証APIでIDトークン、チャネルID、`nonce`を照合し、友だち関係も確認する。友だち追加済みの場合だけ検証済みの`sub`を`users.line_user_id`へ保存する
 5. LINEアクセストークン、リフレッシュトークン、IDトークンは保存しない
 
 連携後は、公式LINEのリッチメニューから`/line`を開き、LINE本人確認だけで既存のSupabaseセッションを発行できます。LINE IDが未連携の場合はログインを拒否し、招待済みメールアドレスによる初回ログインへ案内します。新規ユーザー作成や担当代理店への保険情報共有は自動では行わず、共有は契約者が別途明示的に許可する必要があります。

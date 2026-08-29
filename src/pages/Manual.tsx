@@ -88,7 +88,7 @@ export default function Manual() {
           <Topic icon={Link2} title="LINE連携とリマインド">
             <StepList steps={[
               { title: '先にメールでログイン', text: '初回利用は、招待されたメールアドレスでログインと初期設定を完了します。' },
-              { title: '設定からLINE連携', text: '「LINEアカウントを連携する」を押し、本人のLINEアカウントで許可します。' },
+              { title: '設定からLINE連携', text: '「公式LINEを追加して連携する」を押し、本人のLINEアカウントで許可して公式LINEを友だち追加します。友だち追加済みの場合だけ連携が完了します。' },
               { title: '必要な通知だけON', text: '更新・満期30日前、確定相談前日のリマインドを個別に選べます。初期状態はOFFです。' },
               { title: '公式LINEから開く', text: '連携後はリッチメニューの「保険を確認」から本人確認してアプリを開けます。連携はいつでも解除できます。' },
             ]} />
@@ -115,7 +115,7 @@ export default function Manual() {
           </Topic>
 
           <Topic icon={MessageCircle} title="相談・面談・LINE通知">
-            <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-ink-secondary"><li>顧客の希望日時を確認し、候補の確定・変更・取消・相談完了を行います。</li><li>担当者LINEを連携すると、新規相談などの通知を受け取れます。</li><li>顧客へのLINE通知が未連携・送信失敗の場合、要確認一覧から状態を確認し、必要に応じて再送します。</li><li>通知だけに頼らず、ダッシュボードの未対応件数と相談一覧も確認してください。</li></ul>
+            <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-ink-secondary"><li>顧客の希望日時を確認し、候補の確定・変更・取消・相談完了を行います。</li><li>公式LINEを友だち追加して担当者LINEを連携すると、新規相談などの通知を受け取れます。友だち追加済みの場合だけ連携が完了します。</li><li>顧客へのLINE通知が未連携・送信失敗の場合、要確認一覧から状態を確認し、必要に応じて再送します。</li><li>通知だけに頼らず、ダッシュボードの未対応件数と相談一覧も確認してください。</li></ul>
           </Topic>
 
           <Topic icon={Settings} title="取扱商品の登録">

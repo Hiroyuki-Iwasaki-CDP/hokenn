@@ -52,6 +52,8 @@ const LINE_ERROR_MESSAGES: Record<string, string> = {
   missing_id_token: 'LINEの本人確認情報を取得できませんでした。',
   verification_failed: 'LINEの本人確認情報を検証できませんでした。',
   invalid_user: 'LINEユーザーを確認できませんでした。',
+  friendship_check_failed: '公式LINEの友だち追加状態を確認できませんでした。時間をおいてもう一度お試しください。',
+  friend_required: 'LINE連携には公式LINEの友だち追加が必要です。友だち追加画面で追加してから、もう一度お試しください。',
   already_linked: 'このLINEアカウントは、すでに別の契約者アカウントと連携されています。',
 }
 
@@ -310,7 +312,7 @@ export default function Settings() {
           LINEアカウント連携
         </h2>
         <p className="text-xs leading-relaxed text-ink-muted">
-          本人のLINEアカウントをこの契約者アカウントに紐づけます。連携後は、公式LINEから契約内容の確認画面へ安全に案内できるようになります。
+          本人のLINEアカウントをこの契約者アカウントに紐づけます。相談連絡やリマインドを受け取れるよう、連携の途中で公式LINEを友だち追加します。
         </p>
 
         {lineLoading ? (
@@ -356,7 +358,7 @@ export default function Settings() {
               disabled={!lineConnection?.configured}
               className="rounded-xl bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#05b64d] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              LINEアカウントを連携する
+              公式LINEを追加して連携する
             </button>
             {!lineConnection?.configured && (
               <p className="text-xs text-amber-700">LINE Loginの環境変数を設定すると連携ボタンを利用できます。</p>

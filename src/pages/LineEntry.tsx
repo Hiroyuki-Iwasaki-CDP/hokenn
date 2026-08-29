@@ -10,6 +10,8 @@ const LINE_ERROR_MESSAGES: Record<string, string> = {
   missing_id_token: 'LINEの本人確認情報を取得できませんでした。',
   verification_failed: 'LINEの本人確認情報を検証できませんでした。',
   invalid_user: 'LINEユーザーを確認できませんでした。',
+  friendship_check_failed: '公式LINEの友だち追加状態を確認できませんでした。時間をおいてもう一度お試しください。',
+  friend_required: '保険確認と相談連絡には公式LINEの友だち追加が必要です。下のボタンから追加して、もう一度LINEログインしてください。',
   not_linked: 'このLINEアカウントはまだ連携されていません。最初にメール認証でログインし、設定画面からLINE連携を行ってください。',
   session_failed: 'ログイン状態を作成できませんでした。メール認証でログインしてください。',
 }
@@ -47,7 +49,7 @@ export default function LineEntry() {
         <p className="mt-5 text-xs font-bold tracking-wide text-brand-700">公式LINEから開いています</p>
         <h1 className="mt-1 text-2xl font-bold text-ink">保険内容を確認</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
-          LINE連携済みの方は、LINE本人確認だけで安全に保険情報を表示できます。
+          公式LINEを友だち追加して連携済みの方は、LINE本人確認だけで安全に保険情報を表示できます。
         </p>
 
         {lineError && (
@@ -88,7 +90,7 @@ export default function LineEntry() {
           className="mt-4 flex items-center justify-center gap-2 text-sm font-bold text-[#06A84F] hover:underline"
         >
           <MessageCircle size={17} />
-          担当者へ相談する
+          公式LINEを友だち追加
         </a>
       </main>
     </div>
